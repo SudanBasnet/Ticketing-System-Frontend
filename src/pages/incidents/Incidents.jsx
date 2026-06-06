@@ -1,9 +1,12 @@
 import { useState } from "react";
 
+import { FiPlus, FiSearch } from "react-icons/fi";
+
 import MainLayout from "../../Layouts/MainLayout";
 import IncidentTable from "./IncidentTable";
 import CreateIncidentModal from "./CreateIncidentModal";
 import EditIncidentModal from "./EditIncidentModal";
+import PageHeader from "../../components/UI/PageHeader";
 
 import { incidents as initialIncidents } from "../../data/incidents";
 
@@ -65,30 +68,39 @@ const Incidents = () => {
 
   return (
     <MainLayout>
-      <div className="mb-6 flex items-center justify-between border-b border-slate-200 pb-4">
-        <h1 className="text-3xl font-bold">Incidents</h1>
-
-        <button
-          onClick={() => setIsCreateModalOpen(true)}
-          className="rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition hover:bg-blue-700"
-        >
-          Create Incident
-        </button>
-      </div>
-
-      <input
-        type="text"
-        placeholder="Search incidents..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="mb-4 w-full rounded-lg border p-3"
+      <PageHeader
+        meta="Incident management"
+        title="Incidents"
+        description="Capture, triage, and track service disruptions from first report through resolution."
+        actions={
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="flex items-center gap-2 rounded-lg bg-slate-950 px-4 py-2 font-medium text-white transition hover:bg-cyan-700"
+          >
+            <FiPlus />
+            Create Incident
+          </button>
+        }
       />
 
-      <IncidentTable
-        incidents={filteredIncidents}
-        onDelete={handleDeleteIncident}
-        onEdit={setIncidentToEdit}
-      />
+      <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="mb-4 flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3">
+          <FiSearch className="text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search by number, description, status, priority, or assignee"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full bg-transparent py-3 outline-none"
+          />
+        </div>
+
+        <IncidentTable
+          incidents={filteredIncidents}
+          onDelete={handleDeleteIncident}
+          onEdit={setIncidentToEdit}
+        />
+      </section>
 
       <CreateIncidentModal
         isOpen={isCreateModalOpen}

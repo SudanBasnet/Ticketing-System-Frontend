@@ -7,22 +7,79 @@ import Changes from "../pages/Changes";
 import Problems from "../pages/Problems";
 import Cmdb from "../pages/Cmdb";
 import IncidentDetails from "../pages/incidents/IncidentDetails";
+import Login from "../Auth/Login";
+import Register from "../Auth/Register";
+import ProtectedRoute from "./ProtectedRoute";
 
 const AppRoutes = () => {
   return (
     <Routes>
-      <Route path="/" element={<Dashboard />} />
+      <Route path="/login" element={<Login />} />
 
-      <Route path="/incidents" element={<Incidents />} />
+      <Route path="/register" element={<Register />} />
 
-      <Route path="/requests" element={<Requests />} />
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
 
-      <Route path="/changes" element={<Changes />} />
+      <Route
+        path="/incidents"
+        element={
+          <ProtectedRoute>
+            <Incidents />
+          </ProtectedRoute>
+        }
+      />
 
-      <Route path="/problems" element={<Problems />} />
+      <Route
+        path="/incidents/:id"
+        element={
+          <ProtectedRoute>
+            <IncidentDetails />
+          </ProtectedRoute>
+        }
+      />
 
-      <Route path="/cmdb" element={<Cmdb />} />
-      <Route path="/incidents/:id" element={<IncidentDetails />} />
+      <Route
+        path="/requests"
+        element={
+          <ProtectedRoute>
+            <Requests />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/changes"
+        element={
+          <ProtectedRoute>
+            <Changes />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/problems"
+        element={
+          <ProtectedRoute>
+            <Problems />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/cmdb"
+        element={
+          <ProtectedRoute>
+            <Cmdb />
+          </ProtectedRoute>
+        }
+      />
     </Routes>
   );
 };

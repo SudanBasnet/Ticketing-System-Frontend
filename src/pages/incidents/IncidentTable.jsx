@@ -1,13 +1,14 @@
 import { Link } from "react-router-dom";
+import { FiEdit2, FiTrash2 } from "react-icons/fi";
 
 import StatusBadge from "../../components/UI/StatusBadge";
 import PriorityBadge from "../../components/UI/PriorityBadge";
 
 const IncidentTable = ({ incidents, onDelete, onEdit }) => {
   return (
-    <div className="overflow-hidden border-y border-slate-200 bg-white">
+    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
       <table className="w-full">
-        <thead className="bg-slate-100 text-sm text-slate-600">
+        <thead className="bg-slate-950 text-sm text-white">
           <tr>
             <th className="px-4 py-3 text-left">Number</th>
             <th className="px-4 py-3 text-left">Description</th>
@@ -23,12 +24,12 @@ const IncidentTable = ({ incidents, onDelete, onEdit }) => {
           {incidents.map((incident) => (
             <tr
               key={incident.id}
-              className="border-b border-slate-100 last:border-b-0"
+              className="border-b border-slate-100 transition last:border-b-0 hover:bg-slate-50"
             >
               <td className="p-4">
                 <Link
                   to={`/incidents/${incident.id}`}
-                  className="font-medium text-blue-600 hover:underline"
+                  className="font-semibold text-cyan-700 hover:underline"
                 >
                   {incident.id}
                 </Link>
@@ -57,16 +58,18 @@ const IncidentTable = ({ incidents, onDelete, onEdit }) => {
                   <button
                     type="button"
                     onClick={() => onEdit(incident)}
-                    className="rounded bg-yellow-500 px-3 py-1 text-sm font-medium text-white transition hover:bg-yellow-600"
+                    className="flex items-center gap-1 rounded-lg bg-amber-100 px-3 py-2 text-sm font-medium text-amber-800 transition hover:bg-amber-200"
                   >
+                    <FiEdit2 />
                     Edit
                   </button>
 
                   <button
                     type="button"
                     onClick={() => onDelete(incident.id)}
-                    className="rounded bg-red-600 px-3 py-1 text-sm font-medium text-white transition hover:bg-red-700"
+                    className="flex items-center gap-1 rounded-lg bg-rose-100 px-3 py-2 text-sm font-medium text-rose-800 transition hover:bg-rose-200"
                   >
+                    <FiTrash2 />
                     Delete
                   </button>
                 </div>
