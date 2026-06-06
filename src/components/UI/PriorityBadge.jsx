@@ -1,5 +1,9 @@
 const PriorityBadge = ({ priority }) => {
   const styles = {
+    P1: "bg-rose-100 text-rose-700",
+    P2: "bg-red-100 text-red-700",
+    P3: "bg-amber-100 text-amber-700",
+    P4: "bg-emerald-100 text-emerald-700",
     Critical: "bg-rose-100 text-rose-700",
     High: "bg-red-100 text-red-600",
     Medium: "bg-yellow-100 text-yellow-600",

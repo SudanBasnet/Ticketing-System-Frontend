@@ -7,6 +7,7 @@ import {
   FiShield,
 } from "react-icons/fi";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 import AuthShell from "./AuthShell";
 import { AuthContext } from "../context/auth-context";
@@ -90,6 +91,7 @@ const Login = () => {
       setFailedAttempts((attempts) => attempts + 1);
       setShowCatAlert(true);
       playFailedLoginSound();
+      toast.error("Login failed. Check your email and password.");
 
       window.setTimeout(() => {
         setShowCatAlert(false);
@@ -98,6 +100,7 @@ const Login = () => {
       return;
     }
 
+    toast.success("Welcome back to the service desk.");
     navigate(redirectTo, { replace: true });
   };
 

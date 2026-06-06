@@ -12,10 +12,12 @@ const IncidentTable = ({ incidents, onDelete, onEdit }) => {
           <tr>
             <th className="px-4 py-3 text-left">Number</th>
             <th className="px-4 py-3 text-left">Description</th>
+            <th className="px-4 py-3 text-left">Category</th>
             <th className="px-4 py-3 text-left">Priority</th>
             <th className="px-4 py-3 text-left">Status</th>
+            <th className="px-4 py-3 text-left">Assignment Group</th>
             <th className="px-4 py-3 text-left">Assigned To</th>
-            <th className="px-4 py-3 text-left">SLA</th>
+            <th className="px-4 py-3 text-left">SLA Status</th>
             <th className="px-4 py-3 text-left">Actions</th>
           </tr>
         </thead>
@@ -39,6 +41,15 @@ const IncidentTable = ({ incidents, onDelete, onEdit }) => {
                 {incident.shortDescription}
               </td>
 
+              <td className="px-4 py-4 text-slate-700">
+                <div>
+                  <p className="font-medium">{incident.category}</p>
+                  <p className="text-sm text-slate-500">
+                    {incident.subcategory}
+                  </p>
+                </div>
+              </td>
+
               <td className="w-32 px-4 py-4">
                 <PriorityBadge priority={incident.priority} />
               </td>
@@ -48,10 +59,16 @@ const IncidentTable = ({ incidents, onDelete, onEdit }) => {
               </td>
 
               <td className="px-4 py-4 text-slate-700">
+                {incident.assignmentGroup}
+              </td>
+
+              <td className="px-4 py-4 text-slate-700">
                 {incident.assignedTo}
               </td>
 
-              <td className="px-4 py-4 text-slate-700">{incident.sla}</td>
+              <td className="px-4 py-4">
+                <StatusBadge status={incident.slaStatus} />
+              </td>
 
               <td className="px-4 py-4">
                 <div className="flex gap-2">
@@ -79,7 +96,7 @@ const IncidentTable = ({ incidents, onDelete, onEdit }) => {
 
           {incidents.length === 0 && (
             <tr>
-              <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
+              <td colSpan={9} className="px-4 py-8 text-center text-slate-500">
                 No incidents found.
               </td>
             </tr>

@@ -1,6 +1,7 @@
 import { useContext, useState } from "react";
 import { FiArrowRight, FiLock, FiMail, FiUser } from "react-icons/fi";
 import { Link, Navigate, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 import AuthShell from "./AuthShell";
 import { AuthContext } from "../context/auth-context";
@@ -26,9 +27,11 @@ const Register = () => {
 
     if (!result.ok) {
       setError(result.message);
+      toast.error(result.message);
       return;
     }
 
+    toast.success("Account created. Welcome to ITSM Portal.");
     navigate("/", { replace: true });
   };
 

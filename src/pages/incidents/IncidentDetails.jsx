@@ -1,6 +1,7 @@
 import { useContext, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { FiArrowLeft, FiPlus } from "react-icons/fi";
+import toast from "react-hot-toast";
 
 import PriorityBadge from "../../components/UI/PriorityBadge";
 import StatusBadge from "../../components/UI/StatusBadge";
@@ -75,6 +76,24 @@ const formatTimestamp = () =>
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date());
+
+const DetailCard = ({ title, children }) => (
+  <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+    <h2 className="mb-4 text-xl font-semibold">{title}</h2>
+    {children}
+  </section>
+);
+
+const DetailGrid = ({ items }) => (
+  <div className="grid gap-4 md:grid-cols-2">
+    {items.map((item) => (
+      <div key={item.label}>
+        <p className="text-sm font-medium text-slate-500">{item.label}</p>
+        <p className="mt-1 text-slate-900">{item.value || "Not provided"}</p>
+      </div>
+    ))}
+  </div>
+);
 
 const IncidentDetails = () => {
   const { id } = useParams();
@@ -154,6 +173,7 @@ const IncidentDetails = () => {
 
     setNoteText("");
     setIsAddingNote(false);
+    toast.success("Work note added.");
   };
 
   if (!incident) {
@@ -193,48 +213,166 @@ const IncidentDetails = () => {
             <div className="flex items-center gap-3 rounded-lg bg-white px-4 py-2 shadow-sm">
               <PriorityBadge priority={incident.priority} />
               <StatusBadge status={incident.status} />
+              <StatusBadge status={incident.slaStatus} />
             </div>
           </>
         }
       />
 
-      <section className="mb-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="mb-4 text-xl font-semibold">Incident Information</h2>
+      <div className="mb-6 grid gap-6">
+        <DetailCard title="Basic Information">
+          <DetailGrid
+            items={[
+              { label: "Incident Number", value: incident.id },
+              { label: "Ticket Type", value: incident.ticketType },
+              { label: "Short Description", value: incident.shortDescription },
+              { label: "Detailed Description", value: incident.description },
+              { label: "Category", value: incident.category },
+              { label: "Subcategory", value: incident.subcategory },
+              { label: "Source", value: incident.source },
+            ]}
+          />
+        </DetailCard>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <div>
-            <p className="text-sm font-medium text-slate-500">
-              Short Description
-            </p>
-            <p className="mt-1 text-slate-900">{incident.shortDescription}</p>
-          </div>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <DetailCard title="User Information">
+            <DetailGrid
+              items={[
+                { label: "Caller / Requester", value: incident.caller },
+                { label: "Requester Email", value: incident.requester },
+                { label: "Affected User", value: incident.affectedUser },
+                { label: "Department", value: incident.department },
+                { label: "Contact Number", value: incident.contactNumber },
+                { label: "Email", value: incident.email },
+              ]}
+            />
+          </DetailCard>
 
-          <div>
-            <p className="text-sm font-medium text-slate-500">Assigned To</p>
-            <p className="mt-1 text-slate-900">{incident.assignedTo}</p>
-          </div>
+          <DetailCard title="Priority Management">
+            <div className="grid gap-4 md:grid-cols-3">
+              <div>
+                <p className="text-sm font-medium text-slate-500">Impact</p>
+                <p className="mt-1 text-slate-900">{incident.impact}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-slate-500">Urgency</p>
+                <p className="mt-1 text-slate-900">{incident.urgency}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-slate-500">Priority</p>
+                <div className="mt-1">
+                  <PriorityBadge priority={incident.priority} />
+                </div>
+              </div>
+            </div>
 
-          <div>
-            <p className="text-sm font-medium text-slate-500">Created By</p>
-            <p className="mt-1 text-slate-900">{incident.createdBy}</p>
-          </div>
-
-          <div>
-            <p className="text-sm font-medium text-slate-500">Created Date</p>
-            <p className="mt-1 text-slate-900">{incident.createdDate}</p>
-          </div>
-
-          <div>
-            <p className="text-sm font-medium text-slate-500">Urgency</p>
-            <p className="mt-1 text-slate-900">{incident.urgency}</p>
-          </div>
-
-          <div>
-            <p className="text-sm font-medium text-slate-500">SLA</p>
-            <p className="mt-1 text-slate-900">{incident.sla}</p>
-          </div>
+            <div className="mt-5 rounded-lg bg-slate-50 p-4">
+              <p className="text-sm font-semibold text-slate-700">
+                Priority Matrix
+              </p>
+              <p className="mt-1 text-sm text-slate-500">
+                High + High = P1, High + Medium = P2, Medium + Medium = P3,
+                Low + Low = P4.
+              </p>
+            </div>
+          </DetailCard>
         </div>
-      </section>
+
+        <div className="grid gap-6 lg:grid-cols-2">
+          <DetailCard title="Assignment and Status">
+            <DetailGrid
+              items={[
+                { label: "Assignment Group", value: incident.assignmentGroup },
+                { label: "Assigned To", value: incident.assignedTo },
+                { label: "Created By", value: incident.createdBy },
+                { label: "Updated By", value: incident.updatedBy },
+                { label: "Created Date", value: incident.createdDate },
+                { label: "Status", value: incident.status },
+              ]}
+            />
+          </DetailCard>
+
+          <DetailCard title="SLA Information">
+            <DetailGrid
+              items={[
+                { label: "Response SLA", value: incident.responseSla },
+                { label: "Resolution SLA", value: incident.resolutionSla },
+                { label: "SLA Status", value: incident.slaStatus },
+                { label: "Due Date", value: incident.dueDate },
+              ]}
+            />
+          </DetailCard>
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-2">
+          <DetailCard title="Work Tracking and Resolution">
+            <DetailGrid
+              items={[
+                { label: "Internal Work Notes", value: incident.workNotes },
+                {
+                  label: "Additional Comments",
+                  value: incident.additionalComments,
+                },
+                { label: "Resolution Notes", value: incident.resolutionNotes },
+                { label: "Root Cause", value: incident.rootCause },
+                { label: "Resolution Code", value: incident.resolutionCode },
+              ]}
+            />
+          </DetailCard>
+
+          <DetailCard title="Asset Information">
+            <DetailGrid
+              items={[
+                { label: "Device Name", value: incident.deviceName },
+                { label: "Asset Tag", value: incident.assetTag },
+                { label: "Serial Number", value: incident.serialNumber },
+                { label: "Location", value: incident.location },
+                {
+                  label: "Configuration Item (CI)",
+                  value: incident.configurationItem,
+                },
+              ]}
+            />
+          </DetailCard>
+        </div>
+
+        <DetailCard title="Attachments and Email Integration">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <p className="text-sm font-medium text-slate-500">Attachments</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {(incident.attachments || []).map((attachment) => (
+                  <span
+                    key={attachment}
+                    className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700"
+                  >
+                    {attachment}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-lg bg-cyan-50 p-4">
+              <p className="text-sm font-semibold text-cyan-900">
+                Email-created incident shape
+              </p>
+              <pre className="mt-2 overflow-x-auto text-xs text-cyan-900">
+                {JSON.stringify(
+                  {
+                    ticketType: "Incident",
+                    shortDescription: "Outlook not opening",
+                    description: "User cannot launch Outlook after update",
+                    requester: "john@company.com",
+                    status: "New",
+                  },
+                  null,
+                  2,
+                )}
+              </pre>
+            </div>
+          </div>
+        </DetailCard>
+      </div>
 
       <section className="mb-6 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <div className="mb-4 flex items-center justify-between">

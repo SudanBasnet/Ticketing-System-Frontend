@@ -1,4 +1,5 @@
 import { useState } from "react";
+import toast from "react-hot-toast";
 
 import { FiPlus, FiSearch } from "react-icons/fi";
 
@@ -9,6 +10,7 @@ import EditIncidentModal from "./EditIncidentModal";
 import PageHeader from "../../components/UI/PageHeader";
 
 import { incidents as initialIncidents } from "../../data/incidents";
+import { normalizeIncidentPriority } from "../../utils/incidentPriority";
 
 const getNextIncidentId = (incidents) => {
   const highestNumber = incidents.reduce((highest, incident) => {
@@ -36,21 +38,29 @@ const Incidents = () => {
       ...incidentDetails,
     };
 
-    setIncidents((currentIncidents) => [newIncident, ...currentIncidents]);
+    setIncidents((currentIncidents) => [
+      normalizeIncidentPriority(newIncident),
+      ...currentIncidents,
+    ]);
+    toast.success(`${newIncident.id} created.`);
   };
 
   const handleUpdateIncident = (updatedIncident) => {
+    const normalizedIncident = normalizeIncidentPriority(updatedIncident);
+
     setIncidents((currentIncidents) =>
       currentIncidents.map((incident) =>
-        incident.id === updatedIncident.id ? updatedIncident : incident,
+        incident.id === normalizedIncident.id ? normalizedIncident : incident,
       ),
     );
+    toast.success(`${normalizedIncident.id} updated.`);
   };
 
   const handleDeleteIncident = (incidentId) => {
     setIncidents((currentIncidents) =>
       currentIncidents.filter((incident) => incident.id !== incidentId),
     );
+    toast.success(`${incidentId} deleted.`);
   };
 
   const filteredIncidents = incidents.filter((incident) =>
@@ -60,6 +70,12 @@ const Incidents = () => {
       incident.priority,
       incident.status,
       incident.assignedTo,
+      incident.category,
+      incident.subcategory,
+      incident.assignmentGroup,
+      incident.caller,
+      incident.affectedUser,
+      incident.slaStatus,
     ]
       .join(" ")
       .toLowerCase()

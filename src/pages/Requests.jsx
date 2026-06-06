@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { FiEdit2, FiPlus, FiSearch, FiTrash2 } from "react-icons/fi";
+import toast from "react-hot-toast";
 
 import MainLayout from "../Layouts/MainLayout";
+import FormField from "../components/UI/FormField";
+import ModalShell from "../components/UI/ModalShell";
 import PageHeader from "../components/UI/PageHeader";
 import PriorityBadge from "../components/UI/PriorityBadge";
 import StatusBadge from "../components/UI/StatusBadge";
@@ -38,85 +41,116 @@ const RequestModal = ({ mode, request, onClose, onSave }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4">
-      <div className="w-full max-w-xl rounded-lg bg-white p-6 shadow-xl">
-        <h2 className="text-2xl font-bold">
-          {mode === "edit" ? "Edit Request" : "Create Request"}
-        </h2>
-
-        <form onSubmit={handleSubmit} className="mt-5 space-y-4">
-          <input
-            value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            placeholder="Request title"
-            className="w-full rounded-lg border border-slate-200 p-3 outline-none focus:border-cyan-500 focus:ring-4 focus:ring-cyan-100"
-            required
-          />
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <select
-              value={formData.category}
-              onChange={(e) =>
-                setFormData({ ...formData, category: e.target.value })
-              }
-              className="rounded-lg border border-slate-200 p-3 outline-none focus:border-cyan-500 focus:ring-4 focus:ring-cyan-100"
-            >
-              <option>Access</option>
-              <option>Hardware</option>
-              <option>Software</option>
-              <option>Network</option>
-            </select>
-
-            <select
-              value={formData.status}
-              onChange={(e) =>
-                setFormData({ ...formData, status: e.target.value })
-              }
-              className="rounded-lg border border-slate-200 p-3 outline-none focus:border-cyan-500 focus:ring-4 focus:ring-cyan-100"
-            >
-              <option>Submitted</option>
-              <option>Pending</option>
-              <option>Approved</option>
-              <option>Fulfilled</option>
-            </select>
+    <ModalShell
+      eyebrow="Service catalog"
+      title={mode === "edit" ? "Edit Request" : "Create Request"}
+      description="Capture the request, classify the service need, and set the target fulfillment date."
+      onClose={onClose}
+    >
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <section>
+          <h3 className="mb-3 text-sm font-bold uppercase text-slate-500">
+            Request details
+          </h3>
+          <div className="grid gap-4">
+            <FormField label="Request title">
+              <input
+                value={formData.title}
+                onChange={(e) =>
+                  setFormData({ ...formData, title: e.target.value })
+                }
+                placeholder="New laptop for design team"
+                className={FormField.controlClasses}
+                required
+              />
+            </FormField>
           </div>
+        </section>
 
+        <section>
+          <h3 className="mb-3 text-sm font-bold uppercase text-slate-500">
+            Classification
+          </h3>
           <div className="grid gap-4 md:grid-cols-2">
-            <input
-              value={formData.requester}
-              onChange={(e) =>
-                setFormData({ ...formData, requester: e.target.value })
-              }
-              placeholder="Requester"
-              className="rounded-lg border border-slate-200 p-3 outline-none focus:border-cyan-500 focus:ring-4 focus:ring-cyan-100"
-              required
-            />
+            <FormField label="Category">
+              <select
+                value={formData.category}
+                onChange={(e) =>
+                  setFormData({ ...formData, category: e.target.value })
+                }
+                className={FormField.controlClasses}
+              >
+                <option>Access</option>
+                <option>Hardware</option>
+                <option>Software</option>
+                <option>Network</option>
+              </select>
+            </FormField>
 
-            <select
-              value={formData.priority}
-              onChange={(e) =>
-                setFormData({ ...formData, priority: e.target.value })
-              }
-              className="rounded-lg border border-slate-200 p-3 outline-none focus:border-cyan-500 focus:ring-4 focus:ring-cyan-100"
-            >
-              <option>Low</option>
-              <option>Medium</option>
-              <option>High</option>
-              <option>Critical</option>
-            </select>
+            <FormField label="Status">
+              <select
+                value={formData.status}
+                onChange={(e) =>
+                  setFormData({ ...formData, status: e.target.value })
+                }
+                className={FormField.controlClasses}
+              >
+                <option>Submitted</option>
+                <option>Pending</option>
+                <option>Approved</option>
+                <option>Fulfilled</option>
+              </select>
+            </FormField>
           </div>
+        </section>
 
-          <input
-            type="date"
-            value={formData.dueDate}
-            onChange={(e) =>
-              setFormData({ ...formData, dueDate: e.target.value })
-            }
-            className="w-full rounded-lg border border-slate-200 p-3 outline-none focus:border-cyan-500 focus:ring-4 focus:ring-cyan-100"
-            required
-          />
+        <section>
+          <h3 className="mb-3 text-sm font-bold uppercase text-slate-500">
+            Requester and target
+          </h3>
+          <div className="grid gap-4 md:grid-cols-3">
+            <FormField label="Requester" className="md:col-span-1">
+              <input
+                value={formData.requester}
+                onChange={(e) =>
+                  setFormData({ ...formData, requester: e.target.value })
+                }
+                placeholder="Requester name"
+                className={FormField.controlClasses}
+                required
+              />
+            </FormField>
 
-          <div className="flex justify-end gap-3">
+            <FormField label="Priority">
+              <select
+                value={formData.priority}
+                onChange={(e) =>
+                  setFormData({ ...formData, priority: e.target.value })
+                }
+                className={FormField.controlClasses}
+              >
+                <option>Low</option>
+                <option>Medium</option>
+                <option>High</option>
+                <option>Critical</option>
+              </select>
+            </FormField>
+
+            <FormField label="Due date">
+              <input
+                type="date"
+                value={formData.dueDate}
+                onChange={(e) =>
+                  setFormData({ ...formData, dueDate: e.target.value })
+                }
+                className={FormField.controlClasses}
+                required
+              />
+            </FormField>
+          </div>
+        </section>
+
+        <div className="flex justify-end gap-3 border-t border-slate-200 pt-5">
             <button
               type="button"
               onClick={onClose}
@@ -126,14 +160,13 @@ const RequestModal = ({ mode, request, onClose, onSave }) => {
             </button>
             <button
               type="submit"
-              className="rounded-lg bg-slate-950 px-4 py-2 font-medium text-white transition hover:bg-cyan-700"
+              className="rounded-lg bg-slate-950 px-4 py-2 font-medium text-white transition hover:-translate-y-0.5 hover:bg-cyan-700 hover:shadow-lg"
             >
               Save Request
             </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        </div>
+      </form>
+    </ModalShell>
   );
 };
 
@@ -158,13 +191,16 @@ const Requests = () => {
   );
 
   const handleCreate = (requestDetails) => {
+    const requestId = getNextRequestId(requests);
+
     setRequests((currentRequests) => [
       {
-        id: getNextRequestId(currentRequests),
+        id: requestId,
         ...requestDetails,
       },
       ...currentRequests,
     ]);
+    toast.success(`${requestId} created.`);
   };
 
   const handleUpdate = (updatedRequest) => {
@@ -173,6 +209,7 @@ const Requests = () => {
         request.id === updatedRequest.id ? updatedRequest : request,
       ),
     );
+    toast.success(`${updatedRequest.id} updated.`);
   };
 
   const openCreateModal = () => {
@@ -283,11 +320,13 @@ const Requests = () => {
                       </button>
                       <button
                         onClick={() =>
-                          setRequests((currentRequests) =>
-                            currentRequests.filter(
+                          setRequests((currentRequests) => {
+                            toast.success(`${request.id} deleted.`);
+
+                            return currentRequests.filter(
                               (item) => item.id !== request.id,
-                            ),
-                          )
+                            );
+                          })
                         }
                         className="flex items-center gap-1 rounded-lg bg-rose-100 px-3 py-2 text-sm font-medium text-rose-800 transition hover:bg-rose-200"
                       >
