@@ -6,6 +6,7 @@ import Requests from "../pages/Requests";
 import Changes from "../pages/Changes";
 import Problems from "../pages/Problems";
 import Cmdb from "../pages/Cmdb";
+import IncidentDetails from "../pages/incidents/IncidentDetails";
 
 const AppRoutes = () => {
   return (
@@ -21,6 +22,7 @@ const AppRoutes = () => {
       <Route path="/problems" element={<Problems />} />
 
       <Route path="/cmdb" element={<Cmdb />} />
+      <Route path="/incidents/:id" element={<IncidentDetails />} />
     </Routes>
   );
 };

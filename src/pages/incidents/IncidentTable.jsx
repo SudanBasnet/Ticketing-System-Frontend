@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 import StatusBadge from "../../components/UI/StatusBadge";
 import PriorityBadge from "../../components/UI/PriorityBadge";
 
@@ -23,8 +25,13 @@ const IncidentTable = ({ incidents, onDelete, onEdit }) => {
               key={incident.id}
               className="border-b border-slate-100 last:border-b-0"
             >
-              <td className="w-36 px-4 py-4 font-medium text-slate-900">
-                {incident.id}
+              <td className="p-4">
+                <Link
+                  to={`/incidents/${incident.id}`}
+                  className="font-medium text-blue-600 hover:underline"
+                >
+                  {incident.id}
+                </Link>
               </td>
 
               <td className="px-4 py-4 text-slate-700">
