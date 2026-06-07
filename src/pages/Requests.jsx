@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { FiEdit2, FiPlus, FiSearch, FiTrash2 } from "react-icons/fi";
 import toast from "react-hot-toast";
+import { AnimatePresence, motion } from "framer-motion";
 
 import MainLayout from "../Layouts/MainLayout";
 import FormField from "../components/UI/FormField";
@@ -229,13 +230,14 @@ const Requests = () => {
         title="Requests"
         description="Manage employee service requests from submission through approval and fulfillment."
         actions={
-          <button
+          <motion.button
+            whileTap={{ scale: 0.97 }}
             onClick={openCreateModal}
             className="flex items-center gap-2 rounded-lg bg-slate-950 px-4 py-2 font-medium text-white transition hover:bg-cyan-700"
           >
             <FiPlus />
             Create Request
-          </button>
+          </motion.button>
         }
       />
 
@@ -284,10 +286,16 @@ const Requests = () => {
                 <th className="px-4 py-3 text-left">Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <motion.tbody layout>
+              <AnimatePresence initial={false}>
               {filteredRequests.map((request) => (
-                <tr
+                <motion.tr
                   key={request.id}
+                  layout
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.18 }}
                   className="border-b border-slate-100 transition last:border-b-0 hover:bg-slate-50"
                 >
                   <td className="px-4 py-4 font-semibold text-cyan-700">
@@ -311,14 +319,16 @@ const Requests = () => {
                   </td>
                   <td className="px-4 py-4">
                     <div className="flex gap-2">
-                      <button
+                      <motion.button
+                        whileTap={{ scale: 0.96 }}
                         onClick={() => openEditModal(request)}
                         className="flex items-center gap-1 rounded-lg bg-amber-100 px-3 py-2 text-sm font-medium text-amber-800 transition hover:bg-amber-200"
                       >
                         <FiEdit2 />
                         Edit
-                      </button>
-                      <button
+                      </motion.button>
+                      <motion.button
+                        whileTap={{ scale: 0.96 }}
                         onClick={() =>
                           setRequests((currentRequests) => {
                             toast.success(`${request.id} deleted.`);
@@ -332,11 +342,12 @@ const Requests = () => {
                       >
                         <FiTrash2 />
                         Delete
-                      </button>
+                      </motion.button>
                     </div>
                   </td>
-                </tr>
+                </motion.tr>
               ))}
+              </AnimatePresence>
 
               {filteredRequests.length === 0 && (
                 <tr>
@@ -348,20 +359,22 @@ const Requests = () => {
                   </td>
                 </tr>
               )}
-            </tbody>
+            </motion.tbody>
           </table>
         </div>
       </section>
 
-      {modalMode && (
-        <RequestModal
-          key={selectedRequest?.id ?? "create-request"}
-          mode={modalMode}
-          request={selectedRequest}
-          onClose={() => setModalMode(null)}
-          onSave={modalMode === "edit" ? handleUpdate : handleCreate}
-        />
-      )}
+      <AnimatePresence>
+        {modalMode && (
+          <RequestModal
+            key={selectedRequest?.id ?? "create-request"}
+            mode={modalMode}
+            request={selectedRequest}
+            onClose={() => setModalMode(null)}
+            onSave={modalMode === "edit" ? handleUpdate : handleCreate}
+          />
+        )}
+      </AnimatePresence>
     </MainLayout>
   );
 };

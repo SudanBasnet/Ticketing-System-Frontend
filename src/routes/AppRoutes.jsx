@@ -11,6 +11,9 @@ import Login from "../Auth/Login";
 import Register from "../Auth/Register";
 import ProtectedRoute from "./ProtectedRoute";
 
+const protectedPage = (element) =>
+  <ProtectedRoute>{element}</ProtectedRoute>;
+
 const AppRoutes = () => {
   return (
     <Routes>
@@ -20,65 +23,37 @@ const AppRoutes = () => {
 
       <Route
         path="/"
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        }
+        element={protectedPage(<Dashboard />)}
       />
 
       <Route
         path="/incidents"
-        element={
-          <ProtectedRoute>
-            <Incidents />
-          </ProtectedRoute>
-        }
+        element={protectedPage(<Incidents />)}
       />
 
       <Route
         path="/incidents/:id"
-        element={
-          <ProtectedRoute>
-            <IncidentDetails />
-          </ProtectedRoute>
-        }
+        element={protectedPage(<IncidentDetails />)}
       />
 
       <Route
         path="/requests"
-        element={
-          <ProtectedRoute>
-            <Requests />
-          </ProtectedRoute>
-        }
+        element={protectedPage(<Requests />)}
       />
 
       <Route
         path="/changes"
-        element={
-          <ProtectedRoute>
-            <Changes />
-          </ProtectedRoute>
-        }
+        element={protectedPage(<Changes />)}
       />
 
       <Route
         path="/problems"
-        element={
-          <ProtectedRoute>
-            <Problems />
-          </ProtectedRoute>
-        }
+        element={protectedPage(<Problems />)}
       />
 
       <Route
         path="/cmdb"
-        element={
-          <ProtectedRoute>
-            <Cmdb />
-          </ProtectedRoute>
-        }
+        element={protectedPage(<Cmdb />)}
       />
     </Routes>
   );

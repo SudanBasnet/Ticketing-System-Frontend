@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { FiEdit2, FiTrash2 } from "react-icons/fi";
+import { AnimatePresence, motion } from "framer-motion";
 
 import StatusBadge from "../../components/UI/StatusBadge";
 import PriorityBadge from "../../components/UI/PriorityBadge";
@@ -22,10 +23,16 @@ const IncidentTable = ({ incidents, onDelete, onEdit }) => {
           </tr>
         </thead>
 
-        <tbody>
+        <motion.tbody layout>
+          <AnimatePresence initial={false}>
           {incidents.map((incident) => (
-            <tr
+            <motion.tr
               key={incident.id}
+              layout
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.18 }}
               className="border-b border-slate-100 transition last:border-b-0 hover:bg-slate-50"
             >
               <td className="p-4">
@@ -72,27 +79,30 @@ const IncidentTable = ({ incidents, onDelete, onEdit }) => {
 
               <td className="px-4 py-4">
                 <div className="flex gap-2">
-                  <button
+                  <motion.button
+                    whileTap={{ scale: 0.96 }}
                     type="button"
                     onClick={() => onEdit(incident)}
                     className="flex items-center gap-1 rounded-lg bg-amber-100 px-3 py-2 text-sm font-medium text-amber-800 transition hover:bg-amber-200"
                   >
                     <FiEdit2 />
                     Edit
-                  </button>
+                  </motion.button>
 
-                  <button
+                  <motion.button
+                    whileTap={{ scale: 0.96 }}
                     type="button"
                     onClick={() => onDelete(incident.id)}
                     className="flex items-center gap-1 rounded-lg bg-rose-100 px-3 py-2 text-sm font-medium text-rose-800 transition hover:bg-rose-200"
                   >
                     <FiTrash2 />
                     Delete
-                  </button>
+                  </motion.button>
                 </div>
               </td>
-            </tr>
+            </motion.tr>
           ))}
+          </AnimatePresence>
 
           {incidents.length === 0 && (
             <tr>
@@ -101,7 +111,7 @@ const IncidentTable = ({ incidents, onDelete, onEdit }) => {
               </td>
             </tr>
           )}
-        </tbody>
+        </motion.tbody>
       </table>
     </div>
   );

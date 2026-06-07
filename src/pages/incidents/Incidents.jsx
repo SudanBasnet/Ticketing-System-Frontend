@@ -1,5 +1,6 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { AnimatePresence, motion } from "framer-motion";
 
 import { FiPlus, FiSearch } from "react-icons/fi";
 
@@ -89,13 +90,14 @@ const Incidents = () => {
         title="Incidents"
         description="Capture, triage, and track service disruptions from first report through resolution."
         actions={
-          <button
+          <motion.button
+            whileTap={{ scale: 0.97 }}
             onClick={() => setIsCreateModalOpen(true)}
             className="flex items-center gap-2 rounded-lg bg-slate-950 px-4 py-2 font-medium text-white transition hover:bg-cyan-700"
           >
             <FiPlus />
             Create Incident
-          </button>
+          </motion.button>
         }
       />
 
@@ -118,19 +120,27 @@ const Incidents = () => {
         />
       </section>
 
-      <CreateIncidentModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        onCreate={handleCreateIncident}
-      />
+      <AnimatePresence>
+        {isCreateModalOpen && (
+          <CreateIncidentModal
+            isOpen={isCreateModalOpen}
+            onClose={() => setIsCreateModalOpen(false)}
+            onCreate={handleCreateIncident}
+          />
+        )}
+      </AnimatePresence>
 
-      <EditIncidentModal
-        key={incidentToEdit?.id ?? "new-edit"}
-        isOpen={Boolean(incidentToEdit)}
-        incident={incidentToEdit}
-        onClose={() => setIncidentToEdit(null)}
-        onUpdate={handleUpdateIncident}
-      />
+      <AnimatePresence>
+        {incidentToEdit && (
+          <EditIncidentModal
+            key={incidentToEdit.id}
+            isOpen={Boolean(incidentToEdit)}
+            incident={incidentToEdit}
+            onClose={() => setIncidentToEdit(null)}
+            onUpdate={handleUpdateIncident}
+          />
+        )}
+      </AnimatePresence>
     </MainLayout>
   );
 };

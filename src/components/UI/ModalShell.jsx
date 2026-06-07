@@ -8,6 +8,8 @@ const ModalShell = ({ children, eyebrow, title, description, onClose }) => {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.18 }}
         className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm"
       />
 
@@ -16,6 +18,7 @@ const ModalShell = ({ children, eyebrow, title, description, onClose }) => {
           as={motion.section}
           initial={{ opacity: 0, y: 24, scale: 0.96 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 16, scale: 0.97 }}
           transition={{ type: "spring", stiffness: 320, damping: 26 }}
           className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-lg border border-white/20 bg-white shadow-2xl shadow-slate-950/30"
         >
