@@ -1,9 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { AuthContext } from "./auth-context";
+import { api, apiMessage, setAccessToken } from "../services/api";
 
 const SESSION_KEY = "ticketing-system-user";
-const USERS_KEY = "ticketing-system-users";
 
 const getStoredUser = () => {
   const storedUser = localStorage.getItem(SESSION_KEY);
@@ -11,85 +11,94 @@ const getStoredUser = () => {
   return storedUser ? JSON.parse(storedUser) : null;
 };
 
-const getStoredUsers = () => {
-  const storedUsers = localStorage.getItem(USERS_KEY);
-
-  return storedUsers ? JSON.parse(storedUsers) : [];
-};
-
 const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(getStoredUser);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
 
-  const login = ({ email, password }) => {
-    const users = getStoredUsers();
-    const matchedUser = users.find(
-      (storedUser) =>
-        storedUser.email === email && storedUser.password === password,
-    );
+  useEffect(() => {
+    const hydrateSession = async () => {
+      try {
+        const response = await api.post("/auth/refresh-token");
+        setAccessToken(response.data.data.accessToken);
+        const sessionUser = response.data.data.user;
+        localStorage.setItem(SESSION_KEY, JSON.stringify(sessionUser));
+        setUser(sessionUser);
+      } catch {
+        setAccessToken(null);
+        localStorage.removeItem(SESSION_KEY);
+        setUser(null);
+      } finally {
+        setIsAuthLoading(false);
+      }
+    };
 
-    if (!matchedUser) {
+    hydrateSession();
+  }, []);
+
+  const login = async ({ email, password }) => {
+    try {
+      const response = await api.post("/auth/login", { email, password });
+      const sessionUser = response.data.data.user;
+      setAccessToken(response.data.data.accessToken);
+      localStorage.setItem(SESSION_KEY, JSON.stringify(sessionUser));
+      setUser(sessionUser);
+      return { ok: true };
+    } catch (error) {
       return {
         ok: false,
-        message: "Invalid email or password.",
+        message: apiMessage(error, "Invalid email or password."),
       };
     }
-
-    const sessionUser = {
-      name: matchedUser.name,
-      email: matchedUser.email,
-      role: matchedUser.role,
-    };
-
-    localStorage.setItem(SESSION_KEY, JSON.stringify(sessionUser));
-    setUser(sessionUser);
-
-    return { ok: true };
   };
 
-  const register = ({ name, email, password }) => {
-    const users = getStoredUsers();
-    const existingUser = users.find((storedUser) => storedUser.email === email);
-
-    if (existingUser) {
+  const register = async ({ name, email, password }) => {
+    try {
+      const response = await api.post("/auth/register", { name, email, password });
+      const sessionUser = response.data.data.user;
+      setAccessToken(response.data.data.accessToken);
+      localStorage.setItem(SESSION_KEY, JSON.stringify(sessionUser));
+      setUser(sessionUser);
+      return { ok: true };
+    } catch (error) {
       return {
         ok: false,
-        message: "An account already exists with this email.",
+        message: apiMessage(error, "Registration failed."),
       };
     }
-
-    const newUser = {
-      name,
-      email,
-      password,
-      role: "Service Desk Agent",
-    };
-
-    const sessionUser = {
-      name: newUser.name,
-      email: newUser.email,
-      role: newUser.role,
-    };
-
-    localStorage.setItem(USERS_KEY, JSON.stringify([...users, newUser]));
-    localStorage.setItem(SESSION_KEY, JSON.stringify(sessionUser));
-    setUser(sessionUser);
-
-    return { ok: true };
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await api.post("/auth/logout");
+    } finally {
+      setAccessToken(null);
+      localStorage.removeItem(SESSION_KEY);
+      setUser(null);
+    }
+  };
+
+  const clearSession = () => {
+    setAccessToken(null);
     localStorage.removeItem(SESSION_KEY);
     setUser(null);
+  };
+
+  const setSessionUser = (nextUser) => {
+    localStorage.setItem(SESSION_KEY, JSON.stringify(nextUser));
+    setUser(nextUser);
   };
 
   const value = useMemo(
     () => ({
       user,
+      isAuthLoading,
       login,
       register,
       logout,
+      clearSession,
+      setSessionUser,
     }),
-    [user],
+    [user, isAuthLoading],
   );
 
   return (

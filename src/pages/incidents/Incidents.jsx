@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -10,78 +10,77 @@ import CreateIncidentModal from "./CreateIncidentModal";
 import EditIncidentModal from "./EditIncidentModal";
 import PageHeader from "../../components/UI/PageHeader";
 
-import { incidents as initialIncidents } from "../../data/incidents";
-import { normalizeIncidentPriority } from "../../utils/incidentPriority";
-
-const getNextIncidentId = (incidents) => {
-  const highestNumber = incidents.reduce((highest, incident) => {
-    const incidentNumber = Number(incident.id.replace("INC", ""));
-
-    return Number.isNaN(incidentNumber)
-      ? highest
-      : Math.max(highest, incidentNumber);
-  }, 0);
-
-  return `INC${String(highestNumber + 1).padStart(6, "0")}`;
-};
+import { apiMessage } from "../../services/api";
+import {
+  createIncident,
+  deleteIncident,
+  listIncidents,
+  updateIncident,
+} from "../../services/incidents";
 
 const Incidents = () => {
   const [search, setSearch] = useState("");
 
-  const [incidents, setIncidents] = useState(initialIncidents);
+  const [incidents, setIncidents] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [incidentToEdit, setIncidentToEdit] = useState(null);
 
-  const handleCreateIncident = (incidentDetails) => {
-    const newIncident = {
-      id: getNextIncidentId(incidents),
-      ...incidentDetails,
+  useEffect(() => {
+    const loadIncidents = async () => {
+      setIsLoading(true);
+      setLoadError("");
+      try {
+        const result = await listIncidents({ search });
+        setIncidents(result.incidents);
+      } catch (error) {
+        setLoadError(apiMessage(error, "Could not load incidents."));
+      } finally {
+        setIsLoading(false);
+      }
     };
 
-    setIncidents((currentIncidents) => [
-      normalizeIncidentPriority(newIncident),
-      ...currentIncidents,
-    ]);
-    toast.success(`${newIncident.id} created.`);
+    const timeout = window.setTimeout(loadIncidents, 250);
+    return () => window.clearTimeout(timeout);
+  }, [search]);
+
+  const handleCreateIncident = async (incidentDetails) => {
+    try {
+      const newIncident = await createIncident(incidentDetails);
+      setIncidents((currentIncidents) => [newIncident, ...currentIncidents]);
+      toast.success(`${newIncident.number || newIncident.id} created.`);
+    } catch (error) {
+      toast.error(apiMessage(error, "Could not create incident."));
+    }
   };
 
-  const handleUpdateIncident = (updatedIncident) => {
-    const normalizedIncident = normalizeIncidentPriority(updatedIncident);
-
-    setIncidents((currentIncidents) =>
-      currentIncidents.map((incident) =>
-        incident.id === normalizedIncident.id ? normalizedIncident : incident,
-      ),
-    );
-    toast.success(`${normalizedIncident.id} updated.`);
+  const handleUpdateIncident = async (updatedIncident) => {
+    try {
+      const savedIncident = await updateIncident(updatedIncident);
+      setIncidents((currentIncidents) =>
+        currentIncidents.map((incident) =>
+          incident.id === savedIncident.id ? savedIncident : incident,
+        ),
+      );
+      toast.success(`${savedIncident.number || savedIncident.id} updated.`);
+    } catch (error) {
+      toast.error(apiMessage(error, "Could not update incident."));
+    }
   };
 
-  const handleDeleteIncident = (incidentId) => {
-    setIncidents((currentIncidents) =>
-      currentIncidents.filter((incident) => incident.id !== incidentId),
-    );
-    toast.success(`${incidentId} deleted.`);
+  const handleDeleteIncident = async (incidentId) => {
+    try {
+      await deleteIncident(incidentId);
+      setIncidents((currentIncidents) =>
+        currentIncidents.filter((incident) => incident.id !== incidentId),
+      );
+      toast.success("Incident deleted.");
+    } catch (error) {
+      toast.error(apiMessage(error, "Only admins can delete incidents."));
+    }
   };
-
-  const filteredIncidents = incidents.filter((incident) =>
-    [
-      incident.id,
-      incident.shortDescription,
-      incident.priority,
-      incident.status,
-      incident.assignedTo,
-      incident.category,
-      incident.subcategory,
-      incident.assignmentGroup,
-      incident.caller,
-      incident.affectedUser,
-      incident.slaStatus,
-    ]
-      .join(" ")
-      .toLowerCase()
-      .includes(search.toLowerCase()),
-  );
 
   return (
     <MainLayout>
@@ -113,11 +112,23 @@ const Incidents = () => {
           />
         </div>
 
-        <IncidentTable
-          incidents={filteredIncidents}
-          onDelete={handleDeleteIncident}
-          onEdit={setIncidentToEdit}
-        />
+        {loadError && (
+          <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+            {loadError}
+          </div>
+        )}
+
+        {isLoading ? (
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-8 text-center text-slate-500">
+            Loading incidents...
+          </div>
+        ) : (
+          <IncidentTable
+            incidents={incidents}
+            onDelete={handleDeleteIncident}
+            onEdit={setIncidentToEdit}
+          />
+        )}
       </section>
 
       <AnimatePresence>

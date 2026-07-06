@@ -1,73 +1,33 @@
-import { useContext, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { FiArrowLeft, FiPlus } from "react-icons/fi";
+import {
+  FiArrowLeft,
+  FiDownload,
+  FiFile,
+  FiPlus,
+  FiRefreshCw,
+  FiTrash2,
+  FiUpload,
+} from "react-icons/fi";
 import toast from "react-hot-toast";
 
 import PriorityBadge from "../../components/UI/PriorityBadge";
 import StatusBadge from "../../components/UI/StatusBadge";
 import { AuthContext } from "../../context/auth-context";
-import { incidents } from "../../data/incidents";
 import MainLayout from "../../Layouts/MainLayout";
 import PageHeader from "../../components/UI/PageHeader";
+import { apiMessage } from "../../services/api";
+import {
+  deleteIncidentAttachment,
+  getIncident,
+  listIncidentAttachments,
+  uploadIncidentAttachment,
+} from "../../services/incidents";
 
 const WORK_NOTES_KEY = "ticketing-system-work-notes";
-const ACTIVITY_KEY = "ticketing-system-activity";
-
-const defaultWorkNotes = {
-  INC000001: [
-    {
-      id: 1,
-      author: "Sudan Basnet",
-      createdAt: "2026-06-06 10:15 AM",
-      note: "User confirmed the VPN client fails after entering MFA code.",
-    },
-    {
-      id: 2,
-      author: "David Lee",
-      createdAt: "2026-06-06 10:42 AM",
-      note: "Checked account lockout status and confirmed the user is active.",
-    },
-    {
-      id: 3,
-      author: "Sudan Basnet",
-      createdAt: "2026-06-06 11:05 AM",
-      note: "Reinstalled VPN profile and asked the user to retest connection.",
-    },
-  ],
-};
-
-const defaultActivityTimeline = {
-  INC000001: [
-    {
-      id: 1,
-      title: "Incident created",
-      description: "John Smith reported the issue through the service portal.",
-      timestamp: "2026-06-06 9:58 AM",
-    },
-    {
-      id: 2,
-      title: "Assigned to Service Desk",
-      description: "Incident assigned to Sudan Basnet for initial triage.",
-      timestamp: "2026-06-06 10:03 AM",
-    },
-    {
-      id: 3,
-      title: "Priority updated",
-      description: "Priority changed to High due to business impact.",
-      timestamp: "2026-06-06 10:30 AM",
-    },
-    {
-      id: 4,
-      title: "Work note added",
-      description: "Troubleshooting notes were added to the incident.",
-      timestamp: "2026-06-06 11:05 AM",
-    },
-  ],
-};
 
 const getStoredRecord = (key) => {
   const storedValue = localStorage.getItem(key);
-
   return storedValue ? JSON.parse(storedValue) : {};
 };
 
@@ -98,55 +58,82 @@ const DetailGrid = ({ items }) => (
 const IncidentDetails = () => {
   const { id } = useParams();
   const { user } = useContext(AuthContext);
-  const incident = incidents.find((item) => item.id === id);
+  const [incident, setIncident] = useState(null);
+  const [attachments, setAttachments] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
   const [isAddingNote, setIsAddingNote] = useState(false);
   const [noteText, setNoteText] = useState("");
-  const [workNotesByIncident, setWorkNotesByIncident] = useState(() => ({
-    ...defaultWorkNotes,
-    ...getStoredRecord(WORK_NOTES_KEY),
-  }));
-  const [activityByIncident, setActivityByIncident] = useState(() => ({
-    ...defaultActivityTimeline,
-    ...getStoredRecord(ACTIVITY_KEY),
-  }));
+  const [workNotesByIncident, setWorkNotesByIncident] = useState(() =>
+    getStoredRecord(WORK_NOTES_KEY),
+  );
 
   const workNotes = workNotesByIncident[id] ?? [];
-  const activityTimeline =
-    activityByIncident[id] ??
-    (incident
-      ? [
-          {
-            id: 1,
-            title: "Incident created",
-            description: `${incident.createdBy} reported the issue through the service portal.`,
-            timestamp: incident.createdDate,
-          },
-        ]
-      : []);
 
-  const handleAddWorkNote = (e) => {
-    e.preventDefault();
+  const loadIncident = useCallback(async () => {
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const [incidentResult, attachmentResult] = await Promise.all([
+        getIncident(id),
+        listIncidentAttachments(id),
+      ]);
+      setIncident(incidentResult);
+      setAttachments(attachmentResult);
+    } catch (loadError) {
+      setError(apiMessage(loadError, "Could not load incident."));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(loadIncident, 0);
+    return () => window.clearTimeout(timeout);
+  }, [loadIncident]);
+
+  const handleUploadAttachment = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const attachment = await uploadIncidentAttachment(id, file);
+      setAttachments((current) => [attachment, ...current]);
+      toast.success("Attachment uploaded.");
+    } catch (uploadError) {
+      toast.error(apiMessage(uploadError, "Could not upload attachment."));
+    } finally {
+      setIsUploading(false);
+      event.target.value = "";
+    }
+  };
+
+  const handleDeleteAttachment = async (attachmentId) => {
+    try {
+      await deleteIncidentAttachment(id, attachmentId);
+      setAttachments((current) =>
+        current.filter((attachment) => attachment._id !== attachmentId),
+      );
+      toast.success("Attachment deleted.");
+    } catch (deleteError) {
+      toast.error(apiMessage(deleteError, "Could not delete attachment."));
+    }
+  };
+
+  const handleAddWorkNote = (event) => {
+    event.preventDefault();
 
     const trimmedNote = noteText.trim();
+    if (!trimmedNote) return;
 
-    if (!trimmedNote) {
-      return;
-    }
-
-    const timestamp = formatTimestamp();
-    const author = user?.name || "Service Desk User";
     const nextNote = {
       id: Date.now(),
-      author,
-      createdAt: timestamp,
+      author: user?.name || "Service Desk User",
+      createdAt: formatTimestamp(),
       note: trimmedNote,
-    };
-
-    const nextActivity = {
-      id: Date.now() + 1,
-      title: "Work note added",
-      description: `${author} added a work note to ${id}.`,
-      timestamp,
     };
 
     setWorkNotesByIncident((currentNotes) => {
@@ -154,29 +141,26 @@ const IncidentDetails = () => {
         ...currentNotes,
         [id]: [nextNote, ...(currentNotes[id] ?? [])],
       };
-
       localStorage.setItem(WORK_NOTES_KEY, JSON.stringify(updatedNotes));
-
       return updatedNotes;
-    });
-
-    setActivityByIncident((currentActivity) => {
-      const updatedActivity = {
-        ...currentActivity,
-        [id]: [nextActivity, ...(currentActivity[id] ?? [])],
-      };
-
-      localStorage.setItem(ACTIVITY_KEY, JSON.stringify(updatedActivity));
-
-      return updatedActivity;
     });
 
     setNoteText("");
     setIsAddingNote(false);
-    toast.success("Work note added.");
+    toast.success("Work note added locally.");
   };
 
-  if (!incident) {
+  if (isLoading) {
+    return (
+      <MainLayout>
+        <div className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-500">
+          Loading incident...
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (error || !incident) {
     return (
       <MainLayout>
         <div className="mb-6 border-b border-slate-200 pb-4">
@@ -187,9 +171,7 @@ const IncidentDetails = () => {
 
         <div className="rounded-lg bg-white p-6 shadow">
           <h1 className="text-2xl font-bold">Incident not found</h1>
-          <p className="mt-2 text-slate-600">
-            No incident exists for number {id}.
-          </p>
+          <p className="mt-2 text-slate-600">{error || `No incident exists for ${id}.`}</p>
         </div>
       </MainLayout>
     );
@@ -199,7 +181,7 @@ const IncidentDetails = () => {
     <MainLayout>
       <PageHeader
         meta="Incident details"
-        title={incident.id}
+        title={incident.number || incident.id}
         description={incident.shortDescription}
         actions={
           <>
@@ -210,6 +192,14 @@ const IncidentDetails = () => {
               <FiArrowLeft />
               Back
             </Link>
+            <button
+              type="button"
+              onClick={loadIncident}
+              className="flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 font-medium text-slate-700 transition hover:bg-white"
+            >
+              <FiRefreshCw />
+              Refresh
+            </button>
             <div className="flex items-center gap-3 rounded-lg bg-white px-4 py-2 shadow-sm">
               <PriorityBadge priority={incident.priority} />
               <StatusBadge status={incident.status} />
@@ -220,156 +210,84 @@ const IncidentDetails = () => {
       />
 
       <div className="mb-6 grid gap-6">
-        <DetailCard title="Basic Information">
+        <DetailCard title="Incident Summary">
           <DetailGrid
             items={[
-              { label: "Incident Number", value: incident.id },
-              { label: "Ticket Type", value: incident.ticketType },
-              { label: "Short Description", value: incident.shortDescription },
-              { label: "Detailed Description", value: incident.description },
+              { label: "Incident Number", value: incident.number },
+              { label: "Title", value: incident.shortDescription },
+              { label: "Description", value: incident.description },
               { label: "Category", value: incident.category },
-              { label: "Subcategory", value: incident.subcategory },
-              { label: "Source", value: incident.source },
+              { label: "Tags", value: incident.tags?.join(", ") },
+              { label: "Created By", value: incident.createdBy },
+              { label: "Assigned To", value: incident.assignedTo },
+              { label: "Status", value: incident.status },
+              { label: "Priority", value: incident.priority },
             ]}
           />
         </DetailCard>
 
-        <div className="grid gap-6 lg:grid-cols-2">
-          <DetailCard title="User Information">
-            <DetailGrid
-              items={[
-                { label: "Caller / Requester", value: incident.caller },
-                { label: "Requester Email", value: incident.requester },
-                { label: "Affected User", value: incident.affectedUser },
-                { label: "Department", value: incident.department },
-                { label: "Contact Number", value: incident.contactNumber },
-                { label: "Email", value: incident.email },
-              ]}
-            />
-          </DetailCard>
+        <DetailCard title="Attachments">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-slate-500">
+              Upload screenshots, PDFs, logs, and supporting files.
+            </p>
+            <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-700">
+              <FiUpload />
+              {isUploading ? "Uploading..." : "Upload file"}
+              <input
+                type="file"
+                className="hidden"
+                onChange={handleUploadAttachment}
+                disabled={isUploading}
+              />
+            </label>
+          </div>
 
-          <DetailCard title="Priority Management">
-            <div className="grid gap-4 md:grid-cols-3">
-              <div>
-                <p className="text-sm font-medium text-slate-500">Impact</p>
-                <p className="mt-1 text-slate-900">{incident.impact}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-slate-500">Urgency</p>
-                <p className="mt-1 text-slate-900">{incident.urgency}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-slate-500">Priority</p>
-                <div className="mt-1">
-                  <PriorityBadge priority={incident.priority} />
+          <div className="space-y-3">
+            {attachments.map((attachment) => (
+              <article
+                key={attachment._id}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 p-3"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
+                    <FiFile />
+                  </div>
+                  <div>
+                    <p className="font-medium text-slate-900">{attachment.fileName}</p>
+                    <p className="text-sm text-slate-500">
+                      {attachment.fileType} · {Math.ceil(attachment.fileSize / 1024)} KB
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            <div className="mt-5 rounded-lg bg-slate-50 p-4">
-              <p className="text-sm font-semibold text-slate-700">
-                Priority Matrix
-              </p>
-              <p className="mt-1 text-sm text-slate-500">
-                High + High = P1, High + Medium = P2, Medium + Medium = P3,
-                Low + Low = P4.
-              </p>
-            </div>
-          </DetailCard>
-        </div>
-
-        <div className="grid gap-6 lg:grid-cols-2">
-          <DetailCard title="Assignment and Status">
-            <DetailGrid
-              items={[
-                { label: "Assignment Group", value: incident.assignmentGroup },
-                { label: "Assigned To", value: incident.assignedTo },
-                { label: "Created By", value: incident.createdBy },
-                { label: "Updated By", value: incident.updatedBy },
-                { label: "Created Date", value: incident.createdDate },
-                { label: "Status", value: incident.status },
-              ]}
-            />
-          </DetailCard>
-
-          <DetailCard title="SLA Information">
-            <DetailGrid
-              items={[
-                { label: "Response SLA", value: incident.responseSla },
-                { label: "Resolution SLA", value: incident.resolutionSla },
-                { label: "SLA Status", value: incident.slaStatus },
-                { label: "Due Date", value: incident.dueDate },
-              ]}
-            />
-          </DetailCard>
-        </div>
-
-        <div className="grid gap-6 lg:grid-cols-2">
-          <DetailCard title="Work Tracking and Resolution">
-            <DetailGrid
-              items={[
-                { label: "Internal Work Notes", value: incident.workNotes },
-                {
-                  label: "Additional Comments",
-                  value: incident.additionalComments,
-                },
-                { label: "Resolution Notes", value: incident.resolutionNotes },
-                { label: "Root Cause", value: incident.rootCause },
-                { label: "Resolution Code", value: incident.resolutionCode },
-              ]}
-            />
-          </DetailCard>
-
-          <DetailCard title="Asset Information">
-            <DetailGrid
-              items={[
-                { label: "Device Name", value: incident.deviceName },
-                { label: "Asset Tag", value: incident.assetTag },
-                { label: "Serial Number", value: incident.serialNumber },
-                { label: "Location", value: incident.location },
-                {
-                  label: "Configuration Item (CI)",
-                  value: incident.configurationItem,
-                },
-              ]}
-            />
-          </DetailCard>
-        </div>
-
-        <DetailCard title="Attachments and Email Integration">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <p className="text-sm font-medium text-slate-500">Attachments</p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {(incident.attachments || []).map((attachment) => (
-                  <span
-                    key={attachment}
-                    className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700"
+                <div className="flex items-center gap-2">
+                  <a
+                    href={attachment.fileUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
                   >
-                    {attachment}
-                  </span>
-                ))}
-              </div>
-            </div>
+                    <FiDownload />
+                    Open
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteAttachment(attachment._id)}
+                    className="flex items-center gap-1 rounded-lg bg-rose-100 px-3 py-2 text-sm font-medium text-rose-800 transition hover:bg-rose-200"
+                  >
+                    <FiTrash2 />
+                    Delete
+                  </button>
+                </div>
+              </article>
+            ))}
 
-            <div className="rounded-lg bg-cyan-50 p-4">
-              <p className="text-sm font-semibold text-cyan-900">
-                Email-created incident shape
-              </p>
-              <pre className="mt-2 overflow-x-auto text-xs text-cyan-900">
-                {JSON.stringify(
-                  {
-                    ticketType: "Incident",
-                    shortDescription: "Outlook not opening",
-                    description: "User cannot launch Outlook after update",
-                    requester: "john@company.com",
-                    status: "New",
-                  },
-                  null,
-                  2,
-                )}
-              </pre>
-            </div>
+            {attachments.length === 0 && (
+              <div className="rounded-lg border border-dashed border-slate-300 p-6 text-center text-slate-500">
+                No attachments uploaded yet.
+              </div>
+            )}
           </div>
         </DetailCard>
       </div>
@@ -399,7 +317,7 @@ const IncidentDetails = () => {
               </span>
               <textarea
                 value={noteText}
-                onChange={(e) => setNoteText(e.target.value)}
+                onChange={(event) => setNoteText(event.target.value)}
                 rows={4}
                 placeholder="Add troubleshooting steps, customer updates, or handoff notes..."
                 className="w-full rounded-lg border border-slate-200 bg-white p-3 outline-none focus:border-cyan-500 focus:ring-4 focus:ring-cyan-100"
@@ -448,34 +366,6 @@ const IncidentDetails = () => {
               No work notes have been added yet.
             </div>
           )}
-        </div>
-      </section>
-
-      <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="mb-4 text-xl font-semibold">Activity Timeline</h2>
-
-        <div className="space-y-5">
-          {activityTimeline.map((activity) => (
-            <article key={activity.id} className="flex gap-4">
-              <div className="flex flex-col items-center">
-                <div className="mt-1 h-3 w-3 rounded-full bg-blue-600" />
-                <div className="mt-2 h-full w-px bg-slate-200" />
-              </div>
-
-              <div className="pb-2">
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                  <p className="font-medium text-slate-900">
-                    {activity.title}
-                  </p>
-                  <p className="text-sm text-slate-500">
-                    {activity.timestamp}
-                  </p>
-                </div>
-
-                <p className="mt-1 text-slate-700">{activity.description}</p>
-              </div>
-            </article>
-          ))}
         </div>
       </section>
     </MainLayout>

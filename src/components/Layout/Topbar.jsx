@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { FiBell, FiLogOut, FiSearch } from "react-icons/fi";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { AuthContext } from "../../context/auth-context";
 
@@ -33,10 +33,18 @@ const Topbar = () => {
           <span className="blink-alert absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-rose-500 shadow shadow-rose-300" />
         </button>
 
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-cyan-100 font-bold text-cyan-800 transition hover:scale-105">
-            {(user?.name || "S").charAt(0)}
-          </div>
+        <Link to="/profile" className="flex items-center gap-3">
+          {user?.avatarUrl ? (
+            <img
+              src={user.avatarUrl}
+              alt=""
+              className="h-10 w-10 rounded-lg object-cover"
+            />
+          ) : (
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-cyan-100 font-bold text-cyan-800 transition hover:scale-105">
+              {(user?.name || "S").charAt(0)}
+            </div>
+          )}
 
           <div>
             <p className="font-medium">{user?.name || "Service Desk User"}</p>
@@ -45,7 +53,7 @@ const Topbar = () => {
               {user?.role || "Service Desk Agent"}
             </p>
           </div>
-        </div>
+        </Link>
 
         <button
           type="button"

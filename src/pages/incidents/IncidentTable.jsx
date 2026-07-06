@@ -40,7 +40,7 @@ const IncidentTable = ({ incidents, onDelete, onEdit }) => {
                   to={`/incidents/${incident.id}`}
                   className="font-semibold text-cyan-700 hover:underline"
                 >
-                  {incident.id}
+                  {incident.number || incident.id}
                 </Link>
               </td>
 

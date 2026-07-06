@@ -81,10 +81,10 @@ const Login = () => {
     return <Navigate to="/" replace />;
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const result = login(formData);
+    const result = await login(formData);
 
     if (!result.ok) {
       setError(result.message);
@@ -207,6 +207,11 @@ const Login = () => {
           Need an account?{" "}
           <Link to="/register" className="font-semibold text-cyan-700">
             Register
+          </Link>
+        </p>
+        <p className="mt-2 text-center text-sm text-slate-600">
+          <Link to="/forgot-password" className="font-semibold text-cyan-700">
+            Forgot password?
           </Link>
         </p>
         </div>

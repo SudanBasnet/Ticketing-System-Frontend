@@ -6,9 +6,13 @@ import {
   FiTool,
   FiDatabase,
   FiCheckCircle,
+  FiUsers,
+  FiUser,
 } from "react-icons/fi";
 
+import { useContext } from "react";
 import { NavLink } from "react-router-dom";
+import { AuthContext } from "../../context/auth-context";
 
 const menuItems = [
   {
@@ -41,9 +45,27 @@ const menuItems = [
     path: "/cmdb",
     icon: <FiDatabase />,
   },
+  {
+    name: "Profile",
+    path: "/profile",
+    icon: <FiUser />,
+  },
 ];
 
 const Sidebar = () => {
+  const { user } = useContext(AuthContext);
+  const visibleItems =
+    user?.role === "admin"
+      ? [
+          ...menuItems,
+          {
+            name: "Admin Users",
+            path: "/admin/users",
+            icon: <FiUsers />,
+          },
+        ]
+      : menuItems;
+
   return (
     <aside className="flex w-72 flex-col bg-slate-950 text-white">
       <div className="border-b border-white/10 p-5">
@@ -59,7 +81,7 @@ const Sidebar = () => {
       </div>
 
       <nav className="flex-1 p-4">
-        {menuItems.map((item) => (
+        {visibleItems.map((item) => (
           <NavLink
             key={item.name}
             to={item.path}

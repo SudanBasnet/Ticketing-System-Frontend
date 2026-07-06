@@ -9,10 +9,16 @@ import Cmdb from "../pages/Cmdb";
 import IncidentDetails from "../pages/incidents/IncidentDetails";
 import Login from "../Auth/Login";
 import Register from "../Auth/Register";
+import ForgotPassword from "../Auth/ForgotPassword";
+import ResetPassword from "../Auth/ResetPassword";
+import VerifyEmail from "../Auth/VerifyEmail";
+import Profile from "../pages/Profile";
+import AdminUsers from "../pages/admin/AdminUsers";
 import ProtectedRoute from "./ProtectedRoute";
 
-const protectedPage = (element) =>
-  <ProtectedRoute>{element}</ProtectedRoute>;
+const protectedPage = (element, roles) => (
+  <ProtectedRoute roles={roles}>{element}</ProtectedRoute>
+);
 
 const AppRoutes = () => {
   return (
@@ -20,6 +26,10 @@ const AppRoutes = () => {
       <Route path="/login" element={<Login />} />
 
       <Route path="/register" element={<Register />} />
+      <Route path="/signup" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/verify-email" element={protectedPage(<VerifyEmail />)} />
 
       <Route
         path="/"
@@ -54,6 +64,16 @@ const AppRoutes = () => {
       <Route
         path="/cmdb"
         element={protectedPage(<Cmdb />)}
+      />
+
+      <Route
+        path="/profile"
+        element={protectedPage(<Profile />)}
+      />
+
+      <Route
+        path="/admin/users"
+        element={protectedPage(<AdminUsers />, ["admin"])}
       />
     </Routes>
   );

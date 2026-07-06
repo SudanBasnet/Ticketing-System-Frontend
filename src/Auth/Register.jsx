@@ -20,10 +20,10 @@ const Register = () => {
     return <Navigate to="/" replace />;
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const result = register(formData);
+    const result = await register(formData);
 
     if (!result.ok) {
       setError(result.message);
@@ -93,14 +93,14 @@ const Register = () => {
               <FiLock className="text-slate-400" />
               <input
                 type="password"
-                placeholder="Minimum 6 characters"
+                placeholder="Minimum 8 characters"
                 value={formData.password}
                 onChange={(e) =>
                   setFormData({ ...formData, password: e.target.value })
                 }
                 className="w-full bg-transparent py-3 outline-none"
                 required
-                minLength={6}
+                minLength={8}
               />
             </div>
           </label>
