@@ -1,7 +1,9 @@
+import { useEffect, useMemo, useState } from "react";
 import {
   FiAlertCircle,
   FiCheckCircle,
   FiClock,
+  FiInbox,
   FiTrendingUp,
 } from "react-icons/fi";
 import {
@@ -14,8 +16,10 @@ import {
 
 import MainLayout from "../../Layouts/MainLayout";
 import KpiCard from "../../components/UI/KpiCard";
+import EmptyState from "../../components/UI/EmptyState";
 import PageHeader from "../../components/UI/PageHeader";
-import { incidents } from "../../data/incidents";
+import { apiMessage } from "../../services/api";
+import { listIncidents } from "../../services/incidents";
 
 const chartColors = ["#06b6d4", "#10b981", "#f59e0b", "#f43f5e", "#8b5cf6"];
 const progressColors = [
@@ -44,7 +48,32 @@ const buildChartItems = (records, field) => {
   }));
 };
 
+const isToday = (value) => {
+  if (!value) return false;
+  const date = new Date(value);
+  const today = new Date();
+
+  return (
+    date.getFullYear() === today.getFullYear() &&
+    date.getMonth() === today.getMonth() &&
+    date.getDate() === today.getDate()
+  );
+};
+
+const ChartEmptyState = ({ label }) => (
+  <EmptyState
+    icon={<FiInbox />}
+    title={`No ${label} data yet`}
+    description="Create incidents from the incident workspace and this dashboard will update from the API."
+    className="h-full"
+  />
+);
+
 const PieSummary = ({ items, centerLabel, centerValue }) => {
+  if (items.length === 0) {
+    return <ChartEmptyState label={centerLabel.toLowerCase()} />;
+  }
+
   return (
     <div className="grid items-center gap-5 sm:grid-cols-[210px_1fr]">
       <div className="relative mx-auto h-52 w-52">
@@ -96,24 +125,86 @@ const PieSummary = ({ items, centerLabel, centerValue }) => {
 };
 
 const Dashboard = () => {
-  const totalIncidents = incidents.length;
-  const openIncidents = incidents.filter(
-    (incident) => !["Resolved", "Closed", "Cancelled"].includes(incident.status),
-  ).length;
-  const resolvedToday = incidents.filter(
-    (incident) =>
-      incident.status === "Resolved" && incident.createdDate === "2026-06-06",
-  ).length;
-  const slaBreached = incidents.filter(
-    (incident) => incident.slaStatus === "Breached",
-  ).length;
-  const categoryItems = buildChartItems(incidents, "category");
-  const assignmentGroupItems = buildChartItems(incidents, "assignmentGroup");
-  const priorityItems = buildChartItems(incidents, "priority");
+  const [incidents, setIncidents] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+
+  useEffect(() => {
+    const loadDashboard = async () => {
+      setIsLoading(true);
+      setLoadError("");
+
+      try {
+        const result = await listIncidents();
+        setIncidents(result.incidents);
+      } catch (error) {
+        setLoadError(apiMessage(error, "Could not load dashboard data."));
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadDashboard();
+  }, []);
+
+  const {
+    totalIncidents,
+    openIncidents,
+    resolvedToday,
+    slaBreached,
+    categoryItems,
+    assignmentGroupItems,
+    priorityItems,
+    unassignedIncidents,
+  } = useMemo(() => {
+    const activeStatuses = ["Open", "In Progress"];
+    const closedStatuses = ["Resolved", "Closed"];
+    const total = incidents.length;
+
+    return {
+      totalIncidents: total,
+      openIncidents: incidents.filter((incident) =>
+        activeStatuses.includes(incident.status),
+      ).length,
+      resolvedToday: incidents.filter(
+        (incident) =>
+          closedStatuses.includes(incident.status) &&
+          isToday(incident.closedAt || incident.updatedAt || incident.lastActivityAt),
+      ).length,
+      slaBreached: incidents.filter((incident) => incident.slaStatus === "Breached")
+        .length,
+      categoryItems: buildChartItems(incidents, "category"),
+      assignmentGroupItems: buildChartItems(incidents, "assignmentGroup"),
+      priorityItems: buildChartItems(incidents, "priority"),
+      unassignedIncidents: incidents.filter((incident) => !incident.assignedTo)
+        .length,
+    };
+  }, [incidents]);
+
   const maxCategoryValue = Math.max(
     ...categoryItems.map((item) => item.value),
     1,
   );
+  const focusItems = [
+    {
+      title: "Review high-priority incidents",
+      detail: `${incidents.filter((incident) => ["Critical", "High"].includes(incident.priority)).length} active records need priority review`,
+      showAlert: incidents.some((incident) =>
+        ["Critical", "High"].includes(incident.priority),
+      ),
+    },
+    {
+      title: "Assign incidents without owners",
+      detail: `${unassignedIncidents} incidents still waiting for ownership`,
+      showAlert: unassignedIncidents > 0,
+    },
+    {
+      title: "Follow up SLA pressure",
+      detail: `${slaBreached} incidents are currently breached`,
+      showAlert: slaBreached > 0,
+    },
+  ];
+  const activeAlerts = focusItems.filter((item) => item.showAlert);
 
   return (
     <MainLayout>
@@ -122,6 +213,18 @@ const Dashboard = () => {
         title="Dashboard"
         description="Track live ticket load, SLA pressure, and the work moving through your service desk today."
       />
+
+      {loadError && (
+        <div className="mb-6 rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+          {loadError}
+        </div>
+      )}
+
+      {isLoading && (
+        <div className="mb-6 rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-500 shadow-sm">
+          Loading dashboard...
+        </div>
+      )}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard
@@ -165,7 +268,7 @@ const Dashboard = () => {
               </p>
             </div>
             <span className="rounded-full bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-700 transition hover:bg-emerald-100">
-              Stable
+              {slaBreached > 0 ? "Attention" : "Current"}
             </span>
           </div>
 
@@ -177,7 +280,7 @@ const Dashboard = () => {
             />
             
             <div className="space-y-4">
-              {categoryItems.map((item) => (
+              {categoryItems.length > 0 ? categoryItems.map((item) => (
                 <div key={item.label} className="rounded-lg p-2 transition hover:bg-slate-50">
                   <div className="mb-2 flex justify-between text-sm">
                     <span className="font-medium text-slate-700">
@@ -192,7 +295,9 @@ const Dashboard = () => {
                     />
                   </div>
                 </div>
-              ))}
+              )) : (
+                <ChartEmptyState label="category" />
+              )}
             </div>
           </div>
         </section>
@@ -200,22 +305,18 @@ const Dashboard = () => {
         <section className="motion-card soft-enter rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="text-xl font-semibold">Focus List</h2>
           <div className="mt-5 space-y-4">
-            {[
-              "Review P1/P2 incidents",
-              "Assign incidents without owners",
-              "Follow up SLA warning and breached queue",
-            ].map((item, index) => (
+            {focusItems.map((item) => (
               <div
-                key={item}
+                key={item.title}
                 className="rounded-lg border border-slate-100 bg-slate-50 p-4 transition hover:-translate-y-0.5 hover:border-cyan-200 hover:bg-cyan-50"
               >
                 <div className="flex items-center gap-2">
-                  {index === 2 && (
+                  {item.showAlert && (
                     <span className="blink-alert h-2.5 w-2.5 rounded-full bg-rose-500" />
                   )}
-                  <p className="font-medium text-slate-800">{item}</p>
+                  <p className="font-medium text-slate-800">{item.title}</p>
                 </div>
-                <p className="mt-1 text-sm text-slate-500">Due today</p>
+                <p className="mt-1 text-sm text-slate-500">{item.detail}</p>
               </div>
             ))}
           </div>
@@ -250,22 +351,9 @@ const Dashboard = () => {
           </div>
 
           <div className="space-y-3">
-            {[
-              {
-                title: "SLA breach risk",
-                detail: `${slaBreached} incidents are currently breached`,
-              },
-              {
-                title: "Unassigned incidents",
-                detail: `${incidents.filter((incident) => !incident.assignedTo).length} incidents still waiting for ownership`,
-              },
-              {
-                title: "Critical problem trend",
-                detail: "Network incidents are trending upward",
-              },
-            ].map((alert) => (
+            {activeAlerts.length > 0 ? activeAlerts.map((alert) => (
               <div
-                key={alert.title}
+                key={`alert-${alert.title}`}
                 className="rounded-lg border border-rose-100 bg-rose-50 p-4 transition hover:-translate-y-0.5 hover:border-rose-200 hover:shadow-sm"
               >
                 <div className="flex items-center gap-2">
@@ -274,7 +362,13 @@ const Dashboard = () => {
                 </div>
                 <p className="mt-1 text-sm text-rose-700">{alert.detail}</p>
               </div>
-            ))}
+            )) : (
+              <EmptyState
+                icon={<FiCheckCircle />}
+                title="No active alerts"
+                description="There are no high-priority, unassigned, or breached incidents in the current API result."
+              />
+            )}
           </div>
         </section>
       </div>
@@ -286,7 +380,7 @@ const Dashboard = () => {
         </p>
 
         <div className="mt-5 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {assignmentGroupItems.map((item) => (
+          {assignmentGroupItems.length > 0 ? assignmentGroupItems.map((item) => (
             <div
               key={item.label}
               className="rounded-lg border border-slate-100 bg-slate-50 p-4 transition hover:-translate-y-0.5 hover:border-cyan-200 hover:bg-cyan-50"
@@ -296,7 +390,11 @@ const Dashboard = () => {
                 {item.value}
               </p>
             </div>
-          ))}
+          )) : (
+            <div className="md:col-span-2 lg:col-span-4">
+              <ChartEmptyState label="assignment group" />
+            </div>
+          )}
         </div>
       </section>
     </MainLayout>

@@ -16,6 +16,31 @@ const statusToApi = (status) => {
   return "open";
 };
 
+const titleCase = (value) =>
+  String(value || "")
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+
+const priorityFromApi = (priority) => {
+  const labels = {
+    urgent: "Critical",
+    high: "High",
+    medium: "Medium",
+    low: "Low",
+  };
+  return labels[priority] || titleCase(priority) || "Low";
+};
+
+const statusFromApi = (status) => {
+  const labels = {
+    open: "Open",
+    in_progress: "In Progress",
+    resolved: "Resolved",
+    closed: "Closed",
+  };
+  return labels[status] || titleCase(status) || "Open";
+};
+
 export const mapIncidentFromApi = (incident) => ({
   id: incident._id,
   number: incident.number,
@@ -23,13 +48,17 @@ export const mapIncidentFromApi = (incident) => ({
   description: incident.description,
   category: incident.category || "General",
   subcategory: incident.tags?.join(", ") || "",
-  priority: incident.priority,
-  status: incident.status,
-  assignmentGroup: "Service Desk",
+  priority: priorityFromApi(incident.priority),
+  status: statusFromApi(incident.status),
+  assignmentGroup: incident.assignedTo ? "Assigned Queue" : "Unassigned",
   assignedTo: incident.assignedTo?.name || "",
   slaStatus: incident.status === "closed" ? "Closed" : "On Track",
   createdBy: incident.createdBy?.name || "",
   tags: incident.tags || [],
+  createdAt: incident.createdAt,
+  updatedAt: incident.updatedAt,
+  lastActivityAt: incident.lastActivityAt,
+  closedAt: incident.closedAt,
 });
 
 export const mapIncidentToApi = (incident) => ({
