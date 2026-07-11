@@ -124,3 +124,13 @@ export const uploadIncidentAttachment = async (incidentId, file) => {
 export const deleteIncidentAttachment = async (incidentId, attachmentId) => {
   await api.delete(`/incidents/${incidentId}/attachments/${attachmentId}`);
 };
+
+export const listWorkNotes = async (incidentId) => {
+  const response = await api.get(`/incidents/${incidentId}/work-notes`);
+  return response.data.data;
+};
+
+export const createWorkNote = async (incidentId, note, isInternal) => {
+  const response = await api.post(`/incidents/${incidentId}/work-notes`, { note, isInternal });
+  return response.data.data.workNote;
+};

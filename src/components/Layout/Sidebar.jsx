@@ -17,11 +17,11 @@ import { AuthContext } from "../../context/auth-context";
 const menuItems = [
   {
     name: "Dashboard",
-    path: "/",
+    path: "/app",
     icon: <FiHome />,
   },
   {
-    name: "Incidents",
+    name: "Your Tickets",
     path: "/incidents",
     icon: <FiAlertCircle />,
   },
@@ -54,8 +54,12 @@ const menuItems = [
 
 const Sidebar = () => {
   const { user } = useContext(AuthContext);
-  const visibleItems =
-    user?.role === "admin"
+  const userMenuItems = menuItems.filter((item) =>
+    ["Your Tickets", "Profile"].includes(item.name),
+  );
+  const visibleItems = user?.role === "user"
+    ? userMenuItems
+    : user?.role === "super_admin"
       ? [
           ...menuItems,
           {
@@ -99,7 +103,7 @@ const Sidebar = () => {
         ))}
       </nav>
 
-      <div className="motion-card m-4 rounded-lg border border-white/10 bg-white/10 p-4">
+      {user?.role !== "user" && <div className="motion-card m-4 rounded-lg border border-white/10 bg-white/10 p-4">
         <div className="flex items-center justify-between">
           <p className="text-sm font-semibold">SLA health</p>
           <span className="blink-alert h-2.5 w-2.5 rounded-full bg-emerald-400" />
@@ -108,7 +112,7 @@ const Sidebar = () => {
         <div className="mt-3 h-2 rounded-full bg-slate-800">
           <div className="h-2 w-[92%] rounded-full bg-emerald-400" />
         </div>
-      </div>
+      </div>}
     </aside>
   );
 };

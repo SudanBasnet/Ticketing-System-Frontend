@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { AnimatePresence, motion } from "framer-motion";
+import { useSearchParams } from "react-router-dom";
 
 import { FiPlus, FiSearch } from "react-icons/fi";
 
@@ -9,6 +10,7 @@ import IncidentTable from "./IncidentTable";
 import CreateIncidentModal from "./CreateIncidentModal";
 import EditIncidentModal from "./EditIncidentModal";
 import PageHeader from "../../components/UI/PageHeader";
+import Spinner from "../../components/UI/Spinner";
 
 import { apiMessage } from "../../services/api";
 import {
@@ -19,13 +21,16 @@ import {
 } from "../../services/incidents";
 
 const Incidents = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState("");
 
   const [incidents, setIncidents] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
 
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(
+    searchParams.get("create") === "true",
+  );
   const [incidentToEdit, setIncidentToEdit] = useState(null);
 
   useEffect(() => {
@@ -50,9 +55,19 @@ const Incidents = () => {
     try {
       const newIncident = await createIncident(incidentDetails);
       setIncidents((currentIncidents) => [newIncident, ...currentIncidents]);
-      toast.success(`${newIncident.number || newIncident.id} created.`);
+      toast.success("Incident created. We will be in touch with you shortly.");
+      return true;
     } catch (error) {
       toast.error(apiMessage(error, "Could not create incident."));
+      return false;
+    }
+  };
+
+  const closeCreateModal = () => {
+    setIsCreateModalOpen(false);
+    if (searchParams.has("create")) {
+      searchParams.delete("create");
+      setSearchParams(searchParams, { replace: true });
     }
   };
 
@@ -120,7 +135,7 @@ const Incidents = () => {
 
         {isLoading ? (
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-8 text-center text-slate-500">
-            Loading incidents...
+            <Spinner label="Loading incidents..." />
           </div>
         ) : (
           <IncidentTable
@@ -135,7 +150,7 @@ const Incidents = () => {
         {isCreateModalOpen && (
           <CreateIncidentModal
             isOpen={isCreateModalOpen}
-            onClose={() => setIsCreateModalOpen(false)}
+            onClose={closeCreateModal}
             onCreate={handleCreateIncident}
           />
         )}

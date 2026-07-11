@@ -6,6 +6,7 @@ import PageHeader from "../../components/UI/PageHeader";
 import MainLayout from "../../Layouts/MainLayout";
 import { apiMessage } from "../../services/api";
 import { listUsers, updateUserRole, updateUserStatus } from "../../services/users";
+import Spinner from "../../components/UI/Spinner";
 
 const roles = ["user", "agent", "admin"];
 const statuses = ["active", "disabled"];
@@ -106,7 +107,7 @@ const AdminUsers = () => {
               {isLoading ? (
                 <tr>
                   <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
-                    Loading users...
+                    <Spinner label="Loading users..." />
                   </td>
                 </tr>
               ) : (

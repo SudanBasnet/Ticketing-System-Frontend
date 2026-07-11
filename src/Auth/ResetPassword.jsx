@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import AuthShell from "./AuthShell";
 import { apiMessage } from "../services/api";
 import { resetPassword } from "../services/auth";
+import Spinner from "../components/UI/Spinner";
 
 const ResetPassword = () => {
   const navigate = useNavigate();
@@ -74,7 +75,7 @@ const ResetPassword = () => {
           disabled={isSubmitting}
           className="w-full rounded-lg bg-slate-950 p-3 font-semibold text-white transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isSubmitting ? "Resetting..." : "Reset password"}
+          {isSubmitting ? <Spinner size="sm" label="Resetting..." /> : "Reset password"}
         </button>
       </form>
 

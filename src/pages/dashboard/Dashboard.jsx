@@ -18,6 +18,7 @@ import MainLayout from "../../Layouts/MainLayout";
 import KpiCard from "../../components/UI/KpiCard";
 import EmptyState from "../../components/UI/EmptyState";
 import PageHeader from "../../components/UI/PageHeader";
+import Spinner from "../../components/UI/Spinner";
 import { apiMessage } from "../../services/api";
 import { listIncidents } from "../../services/incidents";
 
@@ -222,7 +223,7 @@ const Dashboard = () => {
 
       {isLoading && (
         <div className="mb-6 rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-500 shadow-sm">
-          Loading dashboard...
+          <Spinner label="Loading dashboard..." />
         </div>
       )}
 

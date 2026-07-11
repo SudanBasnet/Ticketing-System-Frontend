@@ -5,6 +5,8 @@ import toast from "react-hot-toast";
 
 import AuthShell from "./AuthShell";
 import { AuthContext } from "../context/auth-context";
+import Spinner from "../components/UI/Spinner";
+import { delay } from "../utils/delay";
 
 const Register = () => {
   const { register, user } = useContext(AuthContext);
@@ -15,24 +17,28 @@ const Register = () => {
     password: "",
   });
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (user) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/app" replace />;
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
-    const result = await register(formData);
+    const [result] = await Promise.all([register(formData), delay(2000)]);
 
     if (!result.ok) {
       setError(result.message);
       toast.error(result.message);
+      setIsSubmitting(false);
       return;
     }
 
     toast.success("Account created. Welcome to ITSM Portal.");
-    navigate("/", { replace: true });
+    navigate("/app", { replace: true });
   };
 
   return (
@@ -107,9 +113,10 @@ const Register = () => {
 
           <button
             type="submit"
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-slate-950 p-3 font-semibold text-white transition hover:bg-cyan-700"
+            disabled={isSubmitting}
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-slate-950 p-3 font-semibold text-white transition hover:bg-cyan-700 disabled:cursor-wait disabled:opacity-70"
           >
-            Register <FiArrowRight />
+            {isSubmitting ? <Spinner size="sm" label="Creating account..." /> : <>Register <FiArrowRight /></>}
           </button>
         </form>
 

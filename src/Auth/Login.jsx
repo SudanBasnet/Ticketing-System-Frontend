@@ -1,30 +1,37 @@
 import { useContext, useState } from "react";
 import {
   FiArrowRight,
-  FiClock,
   FiLock,
   FiMail,
-  FiShield,
 } from "react-icons/fi";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
 import AuthShell from "./AuthShell";
 import { AuthContext } from "../context/auth-context";
+import Spinner from "../components/UI/Spinner";
+import { delay } from "../utils/delay";
+
+// Temporary development accounts. Remove this array and restore empty defaults
+// before deploying the frontend to production.
+const developmentAccounts = [
+  {
+    email: "superadmin@ticketing.local",
+    password: "TicketingOwner!2026",
+  },
+];
 
 const Login = () => {
   const { login, user } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
+  const [formData, setFormData] = useState(developmentAccounts[0]);
   const [error, setError] = useState("");
   const [showCatAlert, setShowCatAlert] = useState(false);
   const [failedAttempts, setFailedAttempts] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const redirectTo = location.state?.from?.pathname || "/";
+  const redirectTo = location.state?.from?.pathname || "/app";
 
   const playFailedLoginSound = () => {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -78,13 +85,15 @@ const Login = () => {
   };
 
   if (user) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/app" replace />;
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
-    const result = await login(formData);
+    const [result] = await Promise.all([login(formData), delay(2000)]);
 
     if (!result.ok) {
       setError(result.message);
@@ -96,6 +105,7 @@ const Login = () => {
       window.setTimeout(() => {
         setShowCatAlert(false);
       }, 2600);
+      setIsSubmitting(false);
 
       return;
     }
@@ -123,26 +133,6 @@ const Login = () => {
         )}
 
         <div className={showCatAlert ? "shake-card" : ""}>
-          <div className="mb-5 grid grid-cols-3 gap-2">
-            {[
-              { label: "Secure", icon: <FiShield /> },
-              { label: "24/7 desk", icon: <FiClock /> },
-              { label: "SLA ready", icon: <FiLock /> },
-            ].map((item) => (
-              <div
-                key={item.label}
-                className="rounded-lg border border-slate-100 bg-slate-50 p-3 text-center transition hover:-translate-y-0.5 hover:border-cyan-200 hover:bg-cyan-50"
-              >
-                <div className="mx-auto flex h-8 w-8 items-center justify-center rounded-lg bg-white text-cyan-700 shadow-sm">
-                  {item.icon}
-                </div>
-                <p className="mt-2 text-xs font-semibold text-slate-600">
-                  {item.label}
-                </p>
-              </div>
-            ))}
-          </div>
-
           <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
             <p className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
@@ -190,18 +180,12 @@ const Login = () => {
 
           <button
             type="submit"
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-slate-950 p-3 font-semibold text-white transition hover:-translate-y-0.5 hover:bg-cyan-700 hover:shadow-lg"
+            disabled={isSubmitting}
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-slate-950 p-3 font-semibold text-white transition hover:-translate-y-0.5 hover:bg-cyan-700 hover:shadow-lg disabled:cursor-wait disabled:opacity-70"
           >
-            Login <FiArrowRight />
+            {isSubmitting ? <Spinner size="sm" label="Signing in..." /> : <>Login <FiArrowRight /></>}
           </button>
         </form>
-
-          <div className="mt-4 rounded-lg border border-cyan-100 bg-cyan-50 p-3 text-sm text-cyan-900">
-            <p className="font-semibold">First time here?</p>
-            <p className="mt-1 text-cyan-800">
-              Register once, then use the same email and password to sign in.
-            </p>
-          </div>
 
         <p className="mt-4 text-center text-sm text-slate-600">
           Need an account?{" "}

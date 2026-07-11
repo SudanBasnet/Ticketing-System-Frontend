@@ -16,26 +16,16 @@ import StatusBadge from "../../components/UI/StatusBadge";
 import { AuthContext } from "../../context/auth-context";
 import MainLayout from "../../Layouts/MainLayout";
 import PageHeader from "../../components/UI/PageHeader";
+import Spinner from "../../components/UI/Spinner";
 import { apiMessage } from "../../services/api";
 import {
   deleteIncidentAttachment,
   getIncident,
   listIncidentAttachments,
   uploadIncidentAttachment,
+  listWorkNotes,
+  createWorkNote,
 } from "../../services/incidents";
-
-const WORK_NOTES_KEY = "ticketing-system-work-notes";
-
-const getStoredRecord = (key) => {
-  const storedValue = localStorage.getItem(key);
-  return storedValue ? JSON.parse(storedValue) : {};
-};
-
-const formatTimestamp = () =>
-  new Intl.DateTimeFormat("en-AU", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date());
 
 const DetailCard = ({ title, children }) => (
   <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
@@ -65,23 +55,25 @@ const IncidentDetails = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [isAddingNote, setIsAddingNote] = useState(false);
   const [noteText, setNoteText] = useState("");
-  const [workNotesByIncident, setWorkNotesByIncident] = useState(() =>
-    getStoredRecord(WORK_NOTES_KEY),
-  );
-
-  const workNotes = workNotesByIncident[id] ?? [];
+  const [isInternalNote, setIsInternalNote] = useState(false);
+  const [workNotes, setWorkNotes] = useState([]);
+  const isStaff = ["agent", "admin", "super_admin"].includes(user?.role);
+  const customerUpdates = workNotes.filter((workNote) => !workNote.isInternal);
+  const internalNotes = workNotes.filter((workNote) => workNote.isInternal);
 
   const loadIncident = useCallback(async () => {
     setIsLoading(true);
     setError("");
 
     try {
-      const [incidentResult, attachmentResult] = await Promise.all([
+      const [incidentResult, attachmentResult, noteResult] = await Promise.all([
         getIncident(id),
         listIncidentAttachments(id),
+        listWorkNotes(id),
       ]);
       setIncident(incidentResult);
       setAttachments(attachmentResult);
+      setWorkNotes(noteResult);
     } catch (loadError) {
       setError(apiMessage(loadError, "Could not load incident."));
     } finally {
@@ -123,38 +115,29 @@ const IncidentDetails = () => {
     }
   };
 
-  const handleAddWorkNote = (event) => {
+  const handleAddWorkNote = async (event) => {
     event.preventDefault();
 
     const trimmedNote = noteText.trim();
     if (!trimmedNote) return;
 
-    const nextNote = {
-      id: Date.now(),
-      author: user?.name || "Service Desk User",
-      createdAt: formatTimestamp(),
-      note: trimmedNote,
-    };
-
-    setWorkNotesByIncident((currentNotes) => {
-      const updatedNotes = {
-        ...currentNotes,
-        [id]: [nextNote, ...(currentNotes[id] ?? [])],
-      };
-      localStorage.setItem(WORK_NOTES_KEY, JSON.stringify(updatedNotes));
-      return updatedNotes;
-    });
-
-    setNoteText("");
-    setIsAddingNote(false);
-    toast.success("Work note added locally.");
+    try {
+      const nextNote = await createWorkNote(id, trimmedNote, isInternalNote);
+      setWorkNotes((current) => [nextNote, ...current]);
+      setNoteText("");
+      setIsInternalNote(false);
+      setIsAddingNote(false);
+      toast.success(isInternalNote ? "Internal note saved." : "Customer update published.");
+    } catch (noteError) {
+      toast.error(apiMessage(noteError, "Could not save work note."));
+    }
   };
 
   if (isLoading) {
     return (
       <MainLayout>
         <div className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-500">
-          Loading incident...
+          <Spinner label="Loading incident..." />
         </div>
       </MainLayout>
     );
@@ -232,8 +215,7 @@ const IncidentDetails = () => {
               Upload screenshots, PDFs, logs, and supporting files.
             </p>
             <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-700">
-              <FiUpload />
-              {isUploading ? "Uploading..." : "Upload file"}
+              {isUploading ? <Spinner size="sm" label="Uploading..." /> : <><FiUpload /> Upload file</>}
               <input
                 type="file"
                 className="hidden"
@@ -296,14 +278,14 @@ const IncidentDetails = () => {
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-semibold">Work Notes</h2>
 
-          <button
+          {isStaff && <button
             type="button"
             onClick={() => setIsAddingNote((isOpen) => !isOpen)}
             className="flex items-center gap-2 rounded-lg bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-700"
           >
             <FiPlus />
             Add Note
-          </button>
+          </button>}
         </div>
 
         {isAddingNote && (
@@ -323,6 +305,11 @@ const IncidentDetails = () => {
                 className="w-full rounded-lg border border-slate-200 bg-white p-3 outline-none focus:border-cyan-500 focus:ring-4 focus:ring-cyan-100"
                 required
               />
+            </label>
+
+            <label className="mt-3 flex items-center gap-2 text-sm font-medium text-slate-700">
+              <input type="checkbox" checked={isInternalNote} onChange={(event) => setIsInternalNote(event.target.checked)} className="h-4 w-4 rounded border-slate-300" />
+              Internal note (hidden from the customer)
             </label>
 
             <div className="mt-3 flex justify-end gap-3">
@@ -346,27 +333,53 @@ const IncidentDetails = () => {
           </form>
         )}
 
-        <div className="space-y-4">
-          {workNotes.map((workNote) => (
-            <article
-              key={workNote.id}
-              className="border-b border-slate-100 pb-4 last:border-b-0 last:pb-0"
-            >
-              <div className="mb-2 flex items-center justify-between gap-4">
-                <p className="font-medium text-slate-900">{workNote.author}</p>
-                <p className="text-sm text-slate-500">{workNote.createdAt}</p>
-              </div>
-
-              <p className="text-slate-700">{workNote.note}</p>
-            </article>
-          ))}
-
-          {workNotes.length === 0 && (
+        {workNotes.length === 0 ? (
             <div className="rounded-lg border border-dashed border-slate-300 p-6 text-center text-slate-500">
               No work notes have been added yet.
             </div>
-          )}
-        </div>
+        ) : (
+          <div className={`grid gap-5 ${isStaff ? "lg:grid-cols-2" : ""}`}>
+            <div className="rounded-lg border border-cyan-200 bg-cyan-50/60 p-4">
+              <div className="mb-4">
+                <h3 className="font-semibold text-cyan-950">Customer updates</h3>
+                <p className="text-sm text-cyan-700">Visible to the person who created this ticket.</p>
+              </div>
+              <div className="space-y-3">
+                {customerUpdates.map((workNote) => (
+                  <article key={workNote._id} className="rounded-lg border border-cyan-100 bg-white p-4">
+                    <div className="mb-2 flex items-center justify-between gap-4">
+                      <p className="font-medium text-slate-900">{workNote.authorId?.name || "Support team"}</p>
+                      <p className="text-xs text-slate-500">{new Date(workNote.createdAt).toLocaleString()}</p>
+                    </div>
+                    <p className="text-slate-700">{workNote.note}</p>
+                  </article>
+                ))}
+                {customerUpdates.length === 0 && <p className="rounded-lg border border-dashed border-cyan-200 p-4 text-sm text-cyan-800">No customer updates yet.</p>}
+              </div>
+            </div>
+
+            {isStaff && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50/70 p-4">
+                <div className="mb-4">
+                  <h3 className="font-semibold text-amber-950">Internal notes</h3>
+                  <p className="text-sm text-amber-700">Visible only to support staff and administrators.</p>
+                </div>
+                <div className="space-y-3">
+                  {internalNotes.map((workNote) => (
+                    <article key={workNote._id} className="rounded-lg border border-amber-200 bg-white p-4">
+                      <div className="mb-2 flex items-center justify-between gap-4">
+                        <p className="font-medium text-slate-900">{workNote.authorId?.name || "Support team"}</p>
+                        <p className="text-xs text-slate-500">{new Date(workNote.createdAt).toLocaleString()}</p>
+                      </div>
+                      <p className="text-slate-700">{workNote.note}</p>
+                    </article>
+                  ))}
+                  {internalNotes.length === 0 && <p className="rounded-lg border border-dashed border-amber-300 p-4 text-sm text-amber-800">No internal notes yet.</p>}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </section>
     </MainLayout>
   );

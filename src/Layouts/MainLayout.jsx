@@ -3,7 +3,7 @@ import Topbar from "../components/Layout/Topbar";
 
 const MainLayout = ({ children }) => {
   return (
-    <div className="flex h-screen bg-[#eef3f7] text-slate-950">
+    <div className="app-shell flex h-screen bg-base-200 text-base-content transition-colors duration-300">
       <Sidebar />
 
       <div className="flex flex-1 flex-col">

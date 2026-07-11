@@ -7,6 +7,7 @@ import AuthShell from "./AuthShell";
 import { AuthContext } from "../context/auth-context";
 import { apiMessage } from "../services/api";
 import { resendVerification, verifyEmail } from "../services/auth";
+import Spinner from "../components/UI/Spinner";
 
 const VerifyEmail = () => {
   const { user } = useContext(AuthContext);
@@ -68,8 +69,7 @@ const VerifyEmail = () => {
           disabled={isSubmitting}
           className="flex w-full items-center justify-center gap-2 rounded-lg bg-slate-950 p-3 font-semibold text-white transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <FiCheckCircle />
-          {isSubmitting ? "Verifying..." : "Verify email"}
+          {isSubmitting ? <Spinner size="sm" label="Verifying..." /> : <><FiCheckCircle /> Verify email</>}
         </button>
       </form>
 

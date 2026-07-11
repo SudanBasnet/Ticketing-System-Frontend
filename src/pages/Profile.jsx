@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 
 import FormField from "../components/UI/FormField";
 import PageHeader from "../components/UI/PageHeader";
+import Spinner from "../components/UI/Spinner";
 import { AuthContext } from "../context/auth-context";
 import MainLayout from "../Layouts/MainLayout";
 import { apiMessage } from "../services/api";
@@ -108,8 +109,7 @@ const Profile = () => {
             )}
 
             <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
-              <FiCamera />
-              {isUploading ? "Uploading..." : "Upload avatar"}
+              {isUploading ? <Spinner size="sm" label="Uploading..." /> : <><FiCamera /> Upload avatar</>}
               <input
                 type="file"
                 accept="image/*"
@@ -147,8 +147,7 @@ const Profile = () => {
               disabled={isSaving}
               className="flex items-center gap-2 rounded-lg bg-slate-950 px-4 py-2 font-semibold text-white transition hover:bg-cyan-700 disabled:opacity-60"
             >
-              <FiSave />
-              {isSaving ? "Saving..." : "Save profile"}
+              {isSaving ? <Spinner size="sm" label="Saving..." /> : <><FiSave /> Save profile</>}
             </button>
           </form>
         </section>

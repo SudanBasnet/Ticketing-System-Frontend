@@ -1,6 +1,8 @@
+import { useContext } from "react";
 import { Routes, Route } from "react-router-dom";
 
 import Dashboard from "../pages/dashboard/Dashboard";
+import UserDashboard from "../pages/dashboard/UserDashboard";
 import Incidents from "../pages/incidents/Incidents";
 import Requests from "../pages/Requests";
 import Changes from "../pages/Changes";
@@ -15,14 +17,22 @@ import VerifyEmail from "../Auth/VerifyEmail";
 import Profile from "../pages/Profile";
 import AdminUsers from "../pages/admin/AdminUsers";
 import ProtectedRoute from "./ProtectedRoute";
+import { AuthContext } from "../context/auth-context";
+import LandingPage from "../pages/LandingPage";
 
 const protectedPage = (element, roles) => (
   <ProtectedRoute roles={roles}>{element}</ProtectedRoute>
 );
 
+const RoleDashboard = () => {
+  const { user } = useContext(AuthContext);
+  return user?.role === "user" ? <UserDashboard /> : <Dashboard />;
+};
+
 const AppRoutes = () => {
   return (
     <Routes>
+      <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<Login />} />
 
       <Route path="/register" element={<Register />} />
@@ -32,8 +42,8 @@ const AppRoutes = () => {
       <Route path="/verify-email" element={protectedPage(<VerifyEmail />)} />
 
       <Route
-        path="/"
-        element={protectedPage(<Dashboard />)}
+        path="/app"
+        element={protectedPage(<RoleDashboard />)}
       />
 
       <Route
@@ -73,7 +83,7 @@ const AppRoutes = () => {
 
       <Route
         path="/admin/users"
-        element={protectedPage(<AdminUsers />, ["admin"])}
+        element={protectedPage(<AdminUsers />, ["super_admin"])}
       />
     </Routes>
   );

@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import AuthShell from "./AuthShell";
 import { apiMessage } from "../services/api";
 import { forgotPassword } from "../services/auth";
+import Spinner from "../components/UI/Spinner";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -61,8 +62,7 @@ const ForgotPassword = () => {
           disabled={isSubmitting}
           className="flex w-full items-center justify-center gap-2 rounded-lg bg-slate-950 p-3 font-semibold text-white transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <FiSend />
-          {isSubmitting ? "Sending..." : "Send reset token"}
+          {isSubmitting ? <Spinner size="sm" label="Sending..." /> : <><FiSend /> Send reset token</>}
         </button>
       </form>
 
