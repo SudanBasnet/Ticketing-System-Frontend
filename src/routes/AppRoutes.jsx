@@ -19,6 +19,7 @@ import AdminUsers from "../pages/admin/AdminUsers";
 import ProtectedRoute from "./ProtectedRoute";
 import { AuthContext } from "../context/auth-context";
 import LandingPage from "../pages/LandingPage";
+import Knowledge from "../pages/Knowledge";
 
 const protectedPage = (element, roles) => (
   <ProtectedRoute roles={roles}>{element}</ProtectedRoute>
@@ -75,6 +76,7 @@ const AppRoutes = () => {
         path="/cmdb"
         element={protectedPage(<Cmdb />)}
       />
+      <Route path="/knowledge" element={protectedPage(<Knowledge />)} />
 
       <Route
         path="/profile"

@@ -8,6 +8,7 @@ import {
   FiCheckCircle,
   FiUsers,
   FiUser,
+  FiBookOpen,
 } from "react-icons/fi";
 
 import { useContext } from "react";
@@ -50,12 +51,17 @@ const menuItems = [
     path: "/profile",
     icon: <FiUser />,
   },
+  {
+    name: "Knowledge",
+    path: "/knowledge",
+    icon: <FiBookOpen />,
+  },
 ];
 
 const Sidebar = () => {
   const { user } = useContext(AuthContext);
   const userMenuItems = menuItems.filter((item) =>
-    ["Your Tickets", "Profile"].includes(item.name),
+    ["Your Tickets", "Knowledge", "Profile"].includes(item.name),
   );
   const visibleItems = user?.role === "user"
     ? userMenuItems

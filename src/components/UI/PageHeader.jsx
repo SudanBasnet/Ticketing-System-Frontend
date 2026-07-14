@@ -8,7 +8,7 @@ const PageHeader = ({ title, description, actions, meta }) => {
               {meta}
             </p>
           )}
-          <h1 className="text-3xl font-bold text-slate-950">{title}</h1>
+          <h1 className="text-3xl font-bold text-slate-950"><AnimatedText>{title}</AnimatedText></h1>
           {description && (
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
               {description}
@@ -23,3 +23,4 @@ const PageHeader = ({ title, description, actions, meta }) => {
 };
 
 export default PageHeader;
+import AnimatedText from "./AnimatedText";
