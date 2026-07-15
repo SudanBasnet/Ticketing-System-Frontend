@@ -26,24 +26,11 @@ import {
   listWorkNotes,
   createWorkNote,
 } from "../../services/incidents";
-
-const DetailCard = ({ title, children }) => (
-  <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-    <h2 className="mb-4 text-xl font-semibold">{title}</h2>
-    {children}
-  </section>
-);
-
-const DetailGrid = ({ items }) => (
-  <div className="grid gap-4 md:grid-cols-2">
-    {items.map((item) => (
-      <div key={item.label}>
-        <p className="text-sm font-medium text-slate-500">{item.label}</p>
-        <p className="mt-1 text-slate-900">{item.value || "Not provided"}</p>
-      </div>
-    ))}
-  </div>
-);
+import {
+  DetailCard,
+  DetailGrid,
+  WorkNoteColumn,
+} from "./IncidentDetailSections";
 
 const IncidentDetails = () => {
   const { id } = useParams();
@@ -339,44 +326,22 @@ const IncidentDetails = () => {
             </div>
         ) : (
           <div className={`grid gap-5 ${isStaff ? "lg:grid-cols-2" : ""}`}>
-            <div className="rounded-lg border border-cyan-200 bg-cyan-50/60 p-4">
-              <div className="mb-4">
-                <h3 className="font-semibold text-cyan-950">Customer updates</h3>
-                <p className="text-sm text-cyan-700">Visible to the person who created this ticket.</p>
-              </div>
-              <div className="space-y-3">
-                {customerUpdates.map((workNote) => (
-                  <article key={workNote._id} className="rounded-lg border border-cyan-100 bg-white p-4">
-                    <div className="mb-2 flex items-center justify-between gap-4">
-                      <p className="font-medium text-slate-900">{workNote.authorId?.name || "Support team"}</p>
-                      <p className="text-xs text-slate-500">{new Date(workNote.createdAt).toLocaleString()}</p>
-                    </div>
-                    <p className="text-slate-700">{workNote.note}</p>
-                  </article>
-                ))}
-                {customerUpdates.length === 0 && <p className="rounded-lg border border-dashed border-cyan-200 p-4 text-sm text-cyan-800">No customer updates yet.</p>}
-              </div>
-            </div>
+            <WorkNoteColumn
+              title="Customer updates"
+              description="Visible to the person who created this ticket."
+              notes={customerUpdates}
+              emptyMessage="No customer updates yet."
+              tone="customer"
+            />
 
             {isStaff && (
-              <div className="rounded-lg border border-amber-200 bg-amber-50/70 p-4">
-                <div className="mb-4">
-                  <h3 className="font-semibold text-amber-950">Internal notes</h3>
-                  <p className="text-sm text-amber-700">Visible only to support staff and administrators.</p>
-                </div>
-                <div className="space-y-3">
-                  {internalNotes.map((workNote) => (
-                    <article key={workNote._id} className="rounded-lg border border-amber-200 bg-white p-4">
-                      <div className="mb-2 flex items-center justify-between gap-4">
-                        <p className="font-medium text-slate-900">{workNote.authorId?.name || "Support team"}</p>
-                        <p className="text-xs text-slate-500">{new Date(workNote.createdAt).toLocaleString()}</p>
-                      </div>
-                      <p className="text-slate-700">{workNote.note}</p>
-                    </article>
-                  ))}
-                  {internalNotes.length === 0 && <p className="rounded-lg border border-dashed border-amber-300 p-4 text-sm text-amber-800">No internal notes yet.</p>}
-                </div>
-              </div>
+              <WorkNoteColumn
+                title="Internal notes"
+                description="Visible only to support staff and administrators."
+                notes={internalNotes}
+                emptyMessage="No internal notes yet."
+                tone="internal"
+              />
             )}
           </div>
         )}

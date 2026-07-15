@@ -30,9 +30,8 @@ const RoleDashboard = () => {
   return user?.role === "user" ? <UserDashboard /> : <Dashboard />;
 };
 
-const AppRoutes = () => {
-  return (
-    <Routes>
+const AppRoutes = () => (
+  <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<Login />} />
 
@@ -42,53 +41,23 @@ const AppRoutes = () => {
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/verify-email" element={protectedPage(<VerifyEmail />)} />
 
-      <Route
-        path="/app"
-        element={protectedPage(<RoleDashboard />)}
-      />
-
-      <Route
-        path="/incidents"
-        element={protectedPage(<Incidents />)}
-      />
-
+      <Route path="/app" element={protectedPage(<RoleDashboard />)} />
+      <Route path="/incidents" element={protectedPage(<Incidents />)} />
       <Route
         path="/incidents/:id"
         element={protectedPage(<IncidentDetails />)}
       />
-
-      <Route
-        path="/requests"
-        element={protectedPage(<Requests />)}
-      />
-
-      <Route
-        path="/changes"
-        element={protectedPage(<Changes />)}
-      />
-
-      <Route
-        path="/problems"
-        element={protectedPage(<Problems />)}
-      />
-
-      <Route
-        path="/cmdb"
-        element={protectedPage(<Cmdb />)}
-      />
+      <Route path="/requests" element={protectedPage(<Requests />)} />
+      <Route path="/changes" element={protectedPage(<Changes />)} />
+      <Route path="/problems" element={protectedPage(<Problems />)} />
+      <Route path="/cmdb" element={protectedPage(<Cmdb />)} />
       <Route path="/knowledge" element={protectedPage(<Knowledge />)} />
-
-      <Route
-        path="/profile"
-        element={protectedPage(<Profile />)}
-      />
-
+      <Route path="/profile" element={protectedPage(<Profile />)} />
       <Route
         path="/admin/users"
         element={protectedPage(<AdminUsers />, ["super_admin"])}
       />
-    </Routes>
-  );
-};
+  </Routes>
+);
 
 export default AppRoutes;
