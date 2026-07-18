@@ -1,9 +1,5 @@
 import { useContext, useState } from "react";
-import {
-  FiArrowRight,
-  FiLock,
-  FiMail,
-} from "react-icons/fi";
+import { FiArrowRight, FiLock, FiMail } from "react-icons/fi";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
@@ -11,15 +7,6 @@ import AuthShell from "./AuthShell";
 import { AuthContext } from "../context/auth-context";
 import Spinner from "../components/UI/Spinner";
 import { delay } from "../utils/delay";
-
-// Temporary development accounts. Remove this array and restore empty defaults
-// before deploying the frontend to production.
-const developmentAccounts = [
-  {
-    email: "superadmin@ticketing.local",
-    password: "TicketingOwner!2026",
-  },
-];
 
 const Login = () => {
   const { login, user } = useContext(AuthContext);
@@ -134,70 +121,76 @@ const Login = () => {
 
         <div className={showCatAlert ? "shake-card" : ""}>
           <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <p className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-              {error} Failed attempts: {failedAttempts + 1}
-            </p>
-          )}
+            {error && (
+              <p className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                {error} Failed attempts: {failedAttempts + 1}
+              </p>
+            )}
 
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">
-              Email address
-            </span>
-            <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 transition focus-within:border-cyan-500 focus-within:bg-white focus-within:ring-4 focus-within:ring-cyan-100">
-              <FiMail className="text-slate-400" />
-              <input
-                type="email"
-                placeholder="you@example.com"
-                value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
-                className="w-full bg-transparent py-3 outline-none"
-                required
-              />
-            </div>
-          </label>
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-700">
+                Email address
+              </span>
+              <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 transition focus-within:border-cyan-500 focus-within:bg-white focus-within:ring-4 focus-within:ring-cyan-100">
+                <FiMail className="text-slate-400" />
+                <input
+                  type="email"
+                  placeholder="you@example.com"
+                  value={formData.email}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
+                  className="w-full bg-transparent py-3 outline-none"
+                  required
+                />
+              </div>
+            </label>
 
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">
-              Password
-            </span>
-            <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 transition focus-within:border-cyan-500 focus-within:bg-white focus-within:ring-4 focus-within:ring-cyan-100">
-              <FiLock className="text-slate-400" />
-              <input
-                type="password"
-                placeholder="Enter your password"
-                value={formData.password}
-                onChange={(e) =>
-                  setFormData({ ...formData, password: e.target.value })
-                }
-                className="w-full bg-transparent py-3 outline-none"
-                required
-              />
-            </div>
-          </label>
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-700">
+                Password
+              </span>
+              <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 transition focus-within:border-cyan-500 focus-within:bg-white focus-within:ring-4 focus-within:ring-cyan-100">
+                <FiLock className="text-slate-400" />
+                <input
+                  type="password"
+                  placeholder="Enter your password"
+                  value={formData.password}
+                  onChange={(e) =>
+                    setFormData({ ...formData, password: e.target.value })
+                  }
+                  className="w-full bg-transparent py-3 outline-none"
+                  required
+                />
+              </div>
+            </label>
 
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-slate-950 p-3 font-semibold text-white transition hover:-translate-y-0.5 hover:bg-cyan-700 hover:shadow-lg disabled:cursor-wait disabled:opacity-70"
-          >
-            {isSubmitting ? <Spinner size="sm" label="Signing in..." /> : <>Login <FiArrowRight /></>}
-          </button>
-        </form>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-slate-950 p-3 font-semibold text-white transition hover:-translate-y-0.5 hover:bg-cyan-700 hover:shadow-lg disabled:cursor-wait disabled:opacity-70"
+            >
+              {isSubmitting ? (
+                <Spinner size="sm" label="Signing in..." />
+              ) : (
+                <>
+                  Login <FiArrowRight />
+                </>
+              )}
+            </button>
+          </form>
 
-        <p className="mt-4 text-center text-sm text-slate-600">
-          Need an account?{" "}
-          <Link to="/register" className="font-semibold text-cyan-700">
-            Register
-          </Link>
-        </p>
-        <p className="mt-2 text-center text-sm text-slate-600">
-          <Link to="/forgot-password" className="font-semibold text-cyan-700">
-            Forgot password?
-          </Link>
-        </p>
+          <p className="mt-4 text-center text-sm text-slate-600">
+            Need an account?{" "}
+            <Link to="/register" className="font-semibold text-cyan-700">
+              Register
+            </Link>
+          </p>
+          <p className="mt-2 text-center text-sm text-slate-600">
+            <Link to="/forgot-password" className="font-semibold text-cyan-700">
+              Forgot password?
+            </Link>
+          </p>
         </div>
       </div>
     </AuthShell>
