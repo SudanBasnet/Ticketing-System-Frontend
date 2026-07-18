@@ -12,7 +12,7 @@ const Login = () => {
   const { login, user } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
-  const [formData, setFormData] = useState(developmentAccounts[0]);
+  const [formData, setFormData] = useState([0]);
   const [error, setError] = useState("");
   const [showCatAlert, setShowCatAlert] = useState(false);
   const [failedAttempts, setFailedAttempts] = useState(0);
