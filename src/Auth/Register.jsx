@@ -6,7 +6,6 @@ import toast from "react-hot-toast";
 import AuthShell from "./AuthShell";
 import { AuthContext } from "../context/auth-context";
 import Spinner from "../components/UI/Spinner";
-import { delay } from "../utils/delay";
 
 const Register = () => {
   const { register, user } = useContext(AuthContext);
@@ -28,7 +27,7 @@ const Register = () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
 
-    const [result] = await Promise.all([register(formData), delay(2000)]);
+    const result = await register(formData);
 
     if (!result.ok) {
       setError(result.message);

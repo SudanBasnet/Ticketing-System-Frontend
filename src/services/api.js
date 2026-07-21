@@ -27,8 +27,21 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+    const isPublicAuthRequest = [
+      "/auth/login",
+      "/auth/register",
+      "/auth/refresh-token",
+      "/auth/forgot-password",
+      "/auth/reset-password",
+      "/auth/verify-email",
+    ].some((path) => originalRequest?.url?.endsWith(path));
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (
+      error.response?.status === 401 &&
+      !originalRequest?._retry &&
+      !isPublicAuthRequest &&
+      getAccessToken()
+    ) {
       originalRequest._retry = true;
       const response = await axios.post(
         `${API_URL}/auth/refresh-token`,

@@ -6,7 +6,6 @@ import toast from "react-hot-toast";
 import AuthShell from "./AuthShell";
 import { AuthContext } from "../context/auth-context";
 import Spinner from "../components/UI/Spinner";
-import { delay } from "../utils/delay";
 
 const Login = () => {
   const { login, user } = useContext(AuthContext);
@@ -80,7 +79,7 @@ const Login = () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
 
-    const [result] = await Promise.all([login(formData), delay(2000)]);
+    const result = await login(formData);
 
     if (!result.ok) {
       setError(result.message);
